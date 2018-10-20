@@ -1,5 +1,6 @@
 package queryBuilder;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
 
@@ -46,11 +47,11 @@ public class MysqlQuery implements MysqlQueryInterface{
     }
 
     public MysqlQuery min(String field){
-        appendAggregateFunction(field, ",min");
+        appendAggregateFunction(field, "min");
         return this;
     }
 
-    public void appendAggregateFunction(String field, String op){
+    private void appendAggregateFunction(String field, String op){
         if(queryFields.length()>0) queryFields.append(",");
         queryFields.append(op).append("(").append(field).append(")");
     }

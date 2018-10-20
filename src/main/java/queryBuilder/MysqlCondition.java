@@ -70,7 +70,6 @@ class MysqlCondition implements MysqlQueryInterface{
 
 
 
-    @Override
     public StringBuilder getQuery() {
         return mysqlQuery.getQuery();
     }
