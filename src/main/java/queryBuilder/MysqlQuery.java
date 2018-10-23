@@ -1,5 +1,7 @@
 package queryBuilder;
 
+import dao.CommonDAO;
+
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.List;
@@ -75,30 +77,7 @@ public class MysqlQuery implements MysqlQueryInterface{
     }
 
     public static void main(String[] args){
-        String sql = MysqlQuery.get()
-                .sum("*")
-                .avg("id")
-                .table("user us")
-                .table("profile pf")
-                .leftJoin("blog bl").on("us.id", "bl.id")
-                .filter("us.us_id =", "5")
-                .getQuery()
-                .toString();
-        System.out.println(sql);
-
-
-        sql = MysqlQuery.get()
-                .table("user us")
-                .join("profile pf").on("pf.us_id", "us.id")
-                .filter("pf.age >", "36")
-                .groupBy("pf_id")
-                .order("pf_id", "desc")
-                .order("us_name", "asc")
-                .limit(10);
-        System.out.println(sql);
-        Object o = 5;
-        System.out.println(o.toString());
-        System.out.println(new Date().toString());
+        new CommonDAO().getAllStudents();
 
     }
 

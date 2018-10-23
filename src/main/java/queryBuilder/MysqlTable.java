@@ -7,7 +7,7 @@ import java.util.List;
  */
 
 
-class MysqlTable implements MysqlQueryInterface{
+public class MysqlTable implements MysqlQueryInterface{
     private MysqlJoin mysqlJoin;
     private boolean tableSelectedOnce = false;
     private MysqlQueryInterface mysqlQuery;
@@ -116,7 +116,6 @@ class MysqlTable implements MysqlQueryInterface{
     }
 
 
-    @Override
     public StringBuilder getQuery() {
         return mysqlQuery.getQuery();
     }

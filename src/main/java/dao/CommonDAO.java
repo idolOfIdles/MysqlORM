@@ -1,19 +1,26 @@
 package dao;
 
+import model.student;
+import queryBuilder.MysqlQuery;
+
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by safayat on 10/20/18.
  */
 public class CommonDAO {
 
-    private String dbUserName;
+    private String dbUserName = "root";
 
-    private String dbPassword;
+    private String dbPassword = "root";
 
-    private String dbName;
+    //    private String dbName  = "rssdesk";
+    private String dbName  = "schoolmanagement";
 
-    private String dbUrl;
+    //    private String dbUrl = "jdbc:mysql://localhost:3306/rssdesk?useSSL=false";
+    private String dbUrl = "jdbc:mysql://localhost:3306/schoolmanagement";
 
 
 
@@ -37,54 +44,27 @@ public class CommonDAO {
 
     }
 
-    public void createTable() {
-        Connection dbConnection = null;
-        Statement statement = null;
 
-        String createTableSQL = "CREATE TABLE IF NOT EXISTS `Bank`(" +
-                "  `bank_id` VARCHAR(128) NOT NULL," +
-                "  `bank_name` VARCHAR(128) NOT NULL," +
-                "  PRIMARY KEY (`bank_id`));";
-
-        try {
-            dbConnection = getConnection();
-            statement = dbConnection.createStatement();
-            statement.execute(createTableSQL);
-
-        }catch (Exception e){
-            e.printStackTrace();
-            if(statement!=null){
-                try {
-                    statement.close();
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
-                }
-            }
-            if(dbConnection!=null){
-                try {
-                    dbConnection.close();
-                } catch (SQLException e1) {
-                    e1.printStackTrace();
-                }
-            }
-
-        }
-
-    }
-
-    public String getAll(String id)  {
+    public List<student> getAllStudents(Class cls)  {
 
         Connection dbConnection = null;
         PreparedStatement statement = null;
-        String bank_name = "";
-
+        List<student> studentList = new ArrayList<student>();
         try {
+            String sql = MysqlQuery.get().table("student", "st").getQuery().toString();
+
             dbConnection = getConnection();
-            statement = dbConnection.prepareStatement("SELECT cl.accountNumber, cl.address, ac.clientId, ac.accountNumber FROM accountInfo ac RIGHT JOIN client cl ON ac.clientId = cl.id");
+            statement = dbConnection.prepareStatement(sql);
             ResultSet rs = statement.executeQuery();
 
             if(rs.next()){
-                System.out.println(rs.getMetaData());
+                ResultSetMetaData resultSetMetaData = rs.getMetaData();
+                int columnCount = resultSetMetaData.getColumnCount();
+                for(int i=1;i<=columnCount;i++){
+                    String columnName = resultSetMetaData.getColumnName(i);
+                    String tableName  = resultSetMetaData.getTableName(i);
+                }
+
             }
 
 
@@ -105,7 +85,7 @@ public class CommonDAO {
                 }
             }
         }
-        return bank_name;
+        return studentList;
     }
 
 
