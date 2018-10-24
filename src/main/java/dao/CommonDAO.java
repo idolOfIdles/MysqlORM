@@ -87,11 +87,9 @@ public class CommonDAO {
                         if(methodMap.containsKey(getMethodName)){
                             Method columnMethod = methodByName.get(getMethodName);
                             Object ob = null;
-
                             try{
                                 ob = rs.getObject(i);
                             }catch (Exception e){
-
                             }
                             columnMethod.invoke(desk, ob);
                         }

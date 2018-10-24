@@ -116,7 +116,7 @@ public class MysqlTable implements MysqlQueryInterface{
     }
 
 
-    public StringBuilder getQuery() {
+    public MysqlQuery getQuery() {
         return mysqlQuery.getQuery();
     }
 }

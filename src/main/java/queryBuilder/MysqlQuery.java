@@ -15,7 +15,7 @@ import java.util.Map;
 
 
 interface  MysqlQueryInterface {
-    StringBuilder getQuery();
+    MysqlQuery getQuery();
 }
 public class MysqlQuery implements MysqlQueryInterface{
 
@@ -62,8 +62,17 @@ public class MysqlQuery implements MysqlQueryInterface{
         queryFields.append(op).append("(").append(field).append(")");
     }
 
-    public StringBuilder getQuery() {
-        return query;
+    public MysqlQuery getQuery() {
+        return this;
+    }
+
+    public String toString() {
+        return query.toString();
+    }
+
+    public MysqlQuery append(Object str) {
+        query.append(str);
+        return this;
     }
 
     public MysqlTable table(String tableName, String code){
