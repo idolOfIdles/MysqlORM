@@ -7,7 +7,7 @@ import java.util.List;
  */
 
 
-class MysqlCondition implements MysqlQueryInterface{
+public class MysqlCondition implements MysqlQueryInterface{
 
     private MysqlQueryInterface mysqlQuery;
     private MysqlOrder mysqlOrder;

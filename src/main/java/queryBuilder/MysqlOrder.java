@@ -4,7 +4,7 @@ package queryBuilder;
  * Created by safayat on 10/16/18.
  */
 
-class MysqlOrder implements MysqlQueryInterface{
+public class MysqlOrder implements MysqlQueryInterface{
 
     private MysqlQueryInterface mysqlQuery;
     boolean firstOrder = true;

@@ -4,7 +4,7 @@ package queryBuilder;
  * Created by safayat on 10/16/18.
  */
 
-class MysqlGroupBy implements MysqlQueryInterface{
+public class MysqlGroupBy implements MysqlQueryInterface{
 
     private MysqlQueryInterface mysqlQuery;
     private MysqlOrder mysqlOrder;

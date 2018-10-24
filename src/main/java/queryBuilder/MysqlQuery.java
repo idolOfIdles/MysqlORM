@@ -4,7 +4,9 @@ import dao.CommonDAO;
 
 import java.lang.reflect.Method;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by safayat on 10/16/18.
@@ -19,11 +21,13 @@ public class MysqlQuery implements MysqlQueryInterface{
 
     private StringBuilder query;
     private StringBuilder queryFields;
+    private Map<String,String> joinMap;
 
     public MysqlQuery(String fields) {
         this.query = new StringBuilder();
         queryFields = new StringBuilder();
         queryFields.append(fields);
+        joinMap = new HashMap<String, String>();
     }
     public static MysqlQuery get(){
         return new MysqlQuery("*");
@@ -76,8 +80,20 @@ public class MysqlQuery implements MysqlQueryInterface{
         return new MysqlTable(this).table(tableName,"");
     }
 
+    public Map<String, String> getJoinMap() {
+        return joinMap;
+    }
+
+    public void addToJoinMap(String col1, String col2) {
+        this.joinMap.put(col1, col2);
+    }
+
     public static void main(String[] args){
-        new CommonDAO().getAllStudents();
+        try {
+            new CommonDAO().getAllDesks();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 
