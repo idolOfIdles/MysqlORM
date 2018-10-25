@@ -1,7 +1,9 @@
 package queryBuilder;
 
 import dao.CommonDAO;
+import model.User;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,12 +24,14 @@ public class MysqlQuery implements MysqlQueryInterface{
     private StringBuilder query;
     private StringBuilder queryFields;
     private Map<String,String> joinMap;
+    private Map<String,String> tableNameByAlias;
 
     public MysqlQuery(String fields) {
         this.query = new StringBuilder();
         queryFields = new StringBuilder();
         queryFields.append(fields);
         joinMap = new HashMap<String, String>();
+        tableNameByAlias = new HashMap<String, String>();
     }
     public static MysqlQuery get(){
         return new MysqlQuery("*");
@@ -77,20 +81,28 @@ public class MysqlQuery implements MysqlQueryInterface{
 
     public MysqlTable table(String tableName, String code){
         query.append("select " + queryFields.toString() + " from ");
+        tableNameByAlias.put(code.isEmpty() ? tableName : code, tableName);
         return new MysqlTable(this).table(tableName, code);
     }
 
     public MysqlTable table(String tableName){
         query.append("select " + queryFields.toString() + " from ");
         String[] splitted = tableName.trim().split(" ");
+        String code = "";
         if(splitted.length > 1){
-            return new MysqlTable(this).table(splitted[0],splitted[1]);
+            code = splitted[1];
+            return new MysqlTable(this).table(splitted[0], code);
         }
+        tableNameByAlias.put(code.isEmpty() ? tableName : code, tableName);
         return new MysqlTable(this).table(tableName,"");
     }
 
     public Map<String, String> getJoinMap() {
         return joinMap;
+    }
+    public void addToAlias(String tableName, String code) {
+        if(code == null || code.isEmpty()) code = tableName;
+        tableNameByAlias.put(code.isEmpty() ? tableName : code, tableName);
     }
 
     public void addToJoinMap(String col1, String col2) {
@@ -103,6 +115,7 @@ public class MysqlQuery implements MysqlQueryInterface{
         } catch (Exception e) {
             e.printStackTrace();
         }
+
 
     }
 

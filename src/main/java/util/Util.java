@@ -1,5 +1,10 @@
 package util;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by safayat on 10/22/18.
  */
@@ -34,4 +39,20 @@ public class Util {
     public static String toJavaMethodName(String variableName, String prefix){
         return prefix + toTitle(variableName);
     }
+
+    public static List<Annotation> getMethodAnnotations(Class clazz) {
+
+        List<Annotation> list = new ArrayList<Annotation>();
+
+        Method[] methods = clazz.getDeclaredMethods();
+        for(Method m : methods){
+            for (Annotation annotation : m.getDeclaredAnnotations()){
+                list.add(annotation);
+            }
+        }
+
+        return list;
+
+    }
+
 }

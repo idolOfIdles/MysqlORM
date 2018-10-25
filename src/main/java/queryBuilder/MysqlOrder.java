@@ -28,7 +28,7 @@ public class MysqlOrder implements MysqlQueryInterface{
 
 
     @Override
-    public StringBuilder getQuery() {
+    public MysqlQuery getQuery() {
         return mysqlQuery.getQuery();
     }
 }
