@@ -3,6 +3,7 @@ package dao;
 import annotation.ManyToOne;
 import annotation.OneToMany;
 import model.Desk;
+import model.student;
 import queryBuilder.MysqlQuery;
 import util.Util;
 
@@ -68,14 +69,14 @@ public class CommonDAO {
     }
 
 
-    public List<Desk> getAllDesks() throws Exception{
+    public List<student> getAllstudents() throws Exception{
 
         Connection dbConnection = null;
         PreparedStatement statement = null;
-        List<Desk> desks = new ArrayList<Desk>();
+        List<student> students = new ArrayList<student>();
         try {
             MysqlQuery sqlQuery = MysqlQuery.get("dk.name, us.*")
-                    .table("Desk", "dk")
+                    .table("student", "dk")
                     .leftJoin("User", "us").on("us.id", "dk.user_id")
                     .getQuery();
 
@@ -88,7 +89,7 @@ public class CommonDAO {
 
             Map<String, Boolean> methodMap = new HashMap<String, Boolean>();
             Map<String, Method> methodByName = new HashMap<String, Method>();
-            Method[] methods = Desk.class.getDeclaredMethods();
+            Method[] methods = student.class.getDeclaredMethods();
             for(Method m : methods){
                 methodMap.put(m.getName(), true);
                 methodByName.put(m.getName(), m);
@@ -97,12 +98,12 @@ public class CommonDAO {
             ResultSetMetaData resultSetMetaData = rs.getMetaData();
             int columnCount = resultSetMetaData.getColumnCount();
             while(rs.next()){
-                Desk desk = new Desk();
+                student student = new student();
 
                 for(int i=1;i<=columnCount;i++){
                     String columnName = resultSetMetaData.getColumnName(i);
                     String tableName  = resultSetMetaData.getTableName(i);
-                    if(tableName.equalsIgnoreCase(desk.getClass().getSimpleName())){
+                    if(tableName.equalsIgnoreCase(student.getClass().getSimpleName())){
                         String getMethodName = Util.toJavaMethodName(columnName, "set");
                         if(methodMap.containsKey(getMethodName)){
                             Method columnMethod = methodByName.get(getMethodName);
@@ -111,12 +112,12 @@ public class CommonDAO {
                                 ob = rs.getObject(i);
                             }catch (Exception e){
                             }
-                            columnMethod.invoke(desk, ob);
+                            columnMethod.invoke(student, ob);
                         }
                     }
                 }
 
-                desks.add(desk);
+                students.add(student);
 
             }
 
@@ -138,7 +139,7 @@ public class CommonDAO {
                 }
             }
         }
-        return desks;
+        return students;
     }
 
 
@@ -184,17 +185,31 @@ public class CommonDAO {
 
             Object uniqueFieldValue = resultSet.getObject(parentClassUniqueFieldIndex);
             Class<T> parent = parentMap.get(uniqueFieldValue);
+            boolean duplicate = true;
             if(parent == null ){
                 parent = clazz.getClass().newInstance();
                 parentMap.put(uniqueFieldValue, parent);
-                for(int i=1;i<=columnCount;i++){
-                    String columnName = resultSetMetaData.getColumnName(i);
-                    String tableName = resultSetMetaData.getTableName(i);
-                    if(tableName.equalsIgnoreCase(clazz.getSimpleName())){
-                        
+                duplicate = false;
+            }
+
+            for(int i=1;i<=columnCount;i++){
+                String columnName = resultSetMetaData.getColumnName(i);
+                String tableName = resultSetMetaData.getTableName(i);
+                if(tableName.equalsIgnoreCase(clazz.getSimpleName())){
+                    if(duplicate) continue;
+                    String methodName = Util.toJavaMethodName(columnName,"set");
+                    Method method = clazz.getDeclaredMethod(methodName, Util.getClassByType(resultSetMetaData.getColumnType(i)));
+                    method.invoke(parent, resultSet.getObject(i));
+                }else {
+                    Annotation innerAnnotation = annotationByTable.get(tableName);
+                    if(innerAnnotation instanceof OneToMany){
+                        OneToMany oneToMany = (OneToMany)innerAnnotation;
+                        Method method = clazz.getDeclaredMethod(Util.toJavaMethodName(oneToMany.name(),"get"));
+                        List<Object> data = (List<Object>)method.invoke(parent);
                     }
                 }
             }
+
 
 
         }

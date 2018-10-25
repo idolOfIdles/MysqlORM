@@ -2,7 +2,9 @@ package util;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -53,6 +55,15 @@ public class Util {
 
         return list;
 
+    }
+    public static Class getClassByType(int type) {
+        if(type == Types.BIGINT) return Long.class;
+        if(type == Types.INTEGER) return Integer.class;
+        if(type == Types.BINARY) return Boolean.class;
+        if(type == Types.DATE) return Date.class;
+        if(type == Types.FLOAT) return Float.class;
+        if(type == Types.DOUBLE) return Double.class;
+        return String.class;
     }
 
 }
