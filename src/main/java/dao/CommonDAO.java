@@ -1,13 +1,12 @@
 package dao;
 
-import annotation.ManyToOne;
-import annotation.OneToMany;
+import jdbcUtility.ResultSetMetadataUtility;
+import model.desk;
 import model.user;
 import queryBuilder.MysqlQuery;
-import util.Util;
+import util.ReflectUtility;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
 
@@ -67,103 +66,6 @@ public class CommonDAO {
 
     }
 
-    private Map<String,List<Integer>> getColumnIndexesByTable(ResultSetMetaData metaData) {
-
-        Map<String, List<Integer>> columnsByTable = new HashMap<String, List<Integer>>();
-        try {
-
-            for(int column = 1;column <= metaData.getColumnCount(); column++){
-                List<Integer> columns = columnsByTable.getOrDefault(metaData.getTableName(column), new ArrayList<Integer>());
-                if(columns.size() == 0){
-                    columnsByTable.put(metaData.getTableName(column), columns);
-                }
-                columns.add(column);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return columnsByTable;
-
-
-    }
-
-    private <T> T mapRow(ResultSet rs, List<Integer> columnIndexes, Class<T> clazz) throws Exception{
-
-        T newClazz = clazz.newInstance();
-        for(int index : columnIndexes){
-            String columnName = rs.getMetaData().getColumnName(index);
-            int columnType = rs.getMetaData().getColumnType(index);
-            mapColumn(newClazz, columnName, Util.getClassByType(columnType) , rs.getObject(index));
-        }
-        return newClazz;
-
-    }
-
-    private <T> void mapColumn(T t, String columnName, Class type, Object value) throws Exception{
-
-        String methodName = Util.toJavaMethodName(columnName, "set");
-        Method method = t.getClass().getDeclaredMethod(methodName, type);
-        if(method!=null){
-            method.invoke(t,value);
-        }
-
-    }
-
-    private <T> Object getValueFromObject(T t, String name) throws Exception{
-
-        String methodName = Util.toJavaMethodName(name, "get");
-        Method method = t.getClass().getDeclaredMethod(methodName);
-        if(method!=null){
-            return method.invoke(t);
-        }
-        return null;
-    }
-
-    private Map<String, Annotation> getAnnotationByTable(Class clazz) throws Exception{
-        Map<String, Annotation> annotationByTable = new HashMap<String, Annotation>();
-        List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
-        for(Annotation annotation : annotationList){
-            if( annotation instanceof OneToMany){
-                OneToMany oneToMany = (OneToMany) annotation;
-                String type = oneToMany.type().getSimpleName();
-                annotationByTable.put(type, annotation);
-            }
-            if( annotation instanceof ManyToOne){
-                ManyToOne manyToOne = (ManyToOne)annotation;
-                String type = manyToOne.type().getSimpleName();
-                annotationByTable.put(type, annotation);
-            }
-        }
-        return annotationByTable;
-
-    }
-
-    private String getUniqueLKeyFromAnnotation(Class clazz) throws Exception{
-        List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
-        for(Annotation annotation : annotationList){
-            if( annotation instanceof OneToMany){
-                OneToMany oneToMany = (OneToMany) annotation;
-                return oneToMany.outer();
-            }
-            if( annotation instanceof ManyToOne){
-                ManyToOne manyToOne = (ManyToOne)annotation;
-                return manyToOne.outer();
-            }
-        }
-        return "";
-
-    }
-
-    private int getColumnIndex(ResultSetMetaData resultSetMetaData, List<Integer> columnIndexes, String columnName) throws Exception{
-        for(int index : columnIndexes){
-            String clName = resultSetMetaData.getColumnName(index);
-            if(columnName.equals(clName)) return index;
-        }
-        return -1;
-    }
-
 
     public List<user> getAllstudents() throws Exception{
 
@@ -205,55 +107,79 @@ public class CommonDAO {
         return desks;
     }
 
+    public List<desk> getDesks() throws Exception{
+
+        Connection dbConnection = null;
+        PreparedStatement statement = null;
+        List<desk> desks = new ArrayList<desk>();
+        try {
+            MysqlQuery sqlQuery = MysqlQuery.get("dk.*, us.*")
+                    .table("Desk", "dk")
+                    .leftJoin("User", "us").on("us.id", "dk.user_id")
+                    .getQuery();
+
+            String sql = sqlQuery.toString();
+
+            dbConnection = getConnection();
+            statement = dbConnection.prepareStatement(sql);
+            ResultSet rs = statement.executeQuery();
+
+            return getData(desk.class, rs);
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            if(statement!=null){
+                try {
+                    statement.close();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+            if(dbConnection!=null){
+                try {
+                    dbConnection.close();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+        return desks;
+    }
+
 
     public <T> List<T> getData(Class<T> clazz, ResultSet resultSet) throws Exception{
 
-        ResultSetMetaData resultSetMetaData = resultSet.getMetaData();
-        Map<String, Annotation> annotationByTable = getAnnotationByTable(clazz);
-        Map<String,List<Integer>> columnIndexesByTable = getColumnIndexesByTable(resultSetMetaData);
-        String parentClassUniqueField = getUniqueLKeyFromAnnotation(clazz);
-        if(parentClassUniqueField.isEmpty()) return null;
-        int parentClassUniqueFieldIndex = getColumnIndex(resultSetMetaData, columnIndexesByTable.get(clazz.getSimpleName()), parentClassUniqueField);
-        int columnCount = resultSetMetaData.getColumnCount();
-        Set<String> tableSet = new HashSet<String>();
-        for(int i=1;i<=columnCount;i++){
-            if(resultSetMetaData.getTableName(i).equalsIgnoreCase(clazz.getSimpleName())) continue;
-            tableSet.add(resultSetMetaData.getTableName(i));
-        }
-
-        if(parentClassUniqueFieldIndex == 0) return null;
-
+        ResultSetMetadataUtility resultSetMetadataUtility = new ResultSetMetadataUtility(resultSet.getMetaData());
+        Map<String, Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(clazz);
+        int parentClassUniqueFieldIndex = ReflectUtility.getParentUniqueColumnIndex(resultSetMetadataUtility, clazz);
         Map<Object, T> parentMap = new HashMap<Object, T>();
+        List<T> data = new ArrayList<T>();
         while (resultSet.next()){
 
-            Object uniqueFieldValue = resultSet.getObject(parentClassUniqueFieldIndex);
-            T parent = parentMap.get(uniqueFieldValue);
-            if(parent == null ){
-                parent = mapRow(resultSet, columnIndexesByTable.get(clazz.getSimpleName().toLowerCase()), clazz);
-                parentMap.put(uniqueFieldValue, parent);
-            }
-
-            for(String tableName : tableSet){
-                Class childClass = Class.forName("model."+tableName);
-                Object childObject = mapRow(resultSet, columnIndexesByTable.get(tableName), childClass);
-                Annotation annotation = annotationByTable.get(tableName);
-                if(annotation instanceof ManyToOne){
-                    ManyToOne oneToMany = (ManyToOne) annotation;
-                    Class type = oneToMany.type();
-                    mapColumn(parent,oneToMany.name(),type, childObject);
-                }else if( annotation instanceof  OneToMany){
-                    OneToMany oneToMany = (OneToMany) annotation;
-                    List list = (List)getValueFromObject(parent, oneToMany.name());
-                    list.add(childObject);
+            T parent = null;
+            if( parentClassUniqueFieldIndex  > 0){
+                Object uniqueFieldValue = resultSet.getObject(parentClassUniqueFieldIndex);
+                parent = parentMap.get(uniqueFieldValue);
+                if(parent == null ){
+                    parent = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(clazz.getSimpleName()), clazz);
+                    parentMap.put(uniqueFieldValue, parent);
+                    data.add(parent);
                 }
+            }else {
+                parent = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(clazz.getSimpleName()), clazz);
+                data.add(parent);
+            }
+
+            for(String tableName : resultSetMetadataUtility.getTables()){
+                Class childClass = Class.forName("model."+tableName);
+                Object childObject = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(childClass.getSimpleName()), childClass);
+                Annotation annotation = annotationByTable.get(tableName);
+                ReflectUtility.mapRelation(annotation, parent, childObject);
             }
 
         }
 
-        List<T> data = new ArrayList<T>();
-        for(T t : parentMap.values()){
-            data.add(t);
-        }
         return data;
     }
 

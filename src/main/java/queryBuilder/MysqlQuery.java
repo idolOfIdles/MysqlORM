@@ -110,7 +110,8 @@ public class MysqlQuery implements MysqlQueryInterface{
 
     public static void main(String[] args){
         try {
-            new CommonDAO().getAllstudents();
+//            new CommonDAO().getAllstudents();
+            new CommonDAO().getDesks();
         } catch (Exception e) {
             e.printStackTrace();
         }
