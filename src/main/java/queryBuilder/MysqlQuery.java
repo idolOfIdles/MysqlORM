@@ -1,7 +1,6 @@
 package queryBuilder;
 
 import dao.CommonDAO;
-import model.User;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -111,7 +110,7 @@ public class MysqlQuery implements MysqlQueryInterface{
 
     public static void main(String[] args){
         try {
-            new CommonDAO().getAllDesks();
+            new CommonDAO().getAllstudents();
         } catch (Exception e) {
             e.printStackTrace();
         }
