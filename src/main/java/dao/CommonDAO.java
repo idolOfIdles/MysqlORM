@@ -153,43 +153,6 @@ public class CommonDAO {
         return subCategorys;
     }
 
-
-
-    public <T> List<T> getData(Class<T> clazz, ResultSet resultSet) throws Exception{
-
-        ResultSetMetadataUtility resultSetMetadataUtility = new ResultSetMetadataUtility(resultSet.getMetaData());
-        Map<String, Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(clazz);
-        int parentClassUniqueFieldIndex = ReflectUtility.getParentUniqueColumnIndex(resultSetMetadataUtility, clazz);
-        Map<Object, T> parentMap = new HashMap<Object, T>();
-        List<T> data = new ArrayList<T>();
-        while (resultSet.next()){
-
-            T parent = null;
-            if( parentClassUniqueFieldIndex  > 0){
-                Object uniqueFieldValue = resultSet.getObject(parentClassUniqueFieldIndex);
-                parent = parentMap.get(uniqueFieldValue);
-                if(parent == null ){
-                    parent = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(clazz.getSimpleName()), clazz);
-                    parentMap.put(uniqueFieldValue, parent);
-                    data.add(parent);
-                }
-            }else {
-                parent = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(clazz.getSimpleName()), clazz);
-                data.add(parent);
-            }
-
-            for(String tableName : resultSetMetadataUtility.getTables()){
-                Class childClass = Class.forName("model."+tableName);
-                Object childObject = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(childClass.getSimpleName()), childClass);
-                Annotation annotation = annotationByTable.get(tableName);
-                ReflectUtility.mapRelation(annotation, parent, childObject);
-            }
-
-        }
-
-        return data;
-    }
-
     public <T> List<T> getData2(Class<T> clazz, ResultSet resultSet) throws Exception{
 
         ResultSetUtility resultSetUtility = new ResultSetUtility(resultSet);
@@ -212,7 +175,7 @@ public class CommonDAO {
                 Object subRow = subRowMap.get(tableKey);
                 if(subRow == null){
                     Class childClass = Class.forName("model."+tables[i]);
-                    Object childObject = ReflectUtility.mapRow(resultSet, resultSetMetadataUtility.getColumnIndexes(childClass.getSimpleName()), childClass);
+                    Object childObject = resultSetUtility.mapRow(childClass);
                     subRowMap.put(tableKey, childObject);
                 }
             }

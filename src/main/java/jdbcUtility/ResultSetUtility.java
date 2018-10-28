@@ -1,5 +1,8 @@
 package jdbcUtility;
 
+import util.Util;
+
+import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -41,5 +44,35 @@ public class ResultSetUtility {
         }
         return keyBuilder.toString();
     }
+
+    public  <T> T mapRow(Class<T> clazz) throws Exception{
+
+        List<Integer> columnIndexes =  metadata.getColumnIndexes(clazz.getSimpleName());
+        T newClazz = clazz.newInstance();
+        for(int index : columnIndexes){
+            mapColumn(newClazz, index);
+        }
+        return newClazz;
+
+    }
+
+    public  <T> void mapColumn(T row, int index) throws Exception{
+
+        String columnName = metadata.get().getColumnName(index);
+        int columnType = metadata.get().getColumnType(index);
+        try {
+            Object value = getResultSet().getObject(index);
+            String methodName = Util.toJavaMethodName(columnName, "set");
+            Method method = row.getClass().getDeclaredMethod(methodName, Util.getClassByType(columnType));
+            if(method!=null){
+                method.invoke(row,value);
+            }
+
+        }catch (Exception e){}
+
+
+    }
+
+
 
 }

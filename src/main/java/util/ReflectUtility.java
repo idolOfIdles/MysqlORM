@@ -3,6 +3,7 @@ package util;
 import annotation.ManyToOne;
 import annotation.OneToMany;
 import jdbcUtility.ResultSetMetadataUtility;
+import jdbcUtility.ResultSetUtility;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -20,7 +21,7 @@ public class ReflectUtility {
         if(annotation instanceof ManyToOne){
             ManyToOne oneToMany = (ManyToOne) annotation;
             Class type = oneToMany.type();
-            ReflectUtility.mapColumn(parent,oneToMany.name(),type, child);
+            ReflectUtility.mapValue(parent,oneToMany.name(),type, child);
         }else if( annotation instanceof  OneToMany){
             OneToMany oneToMany = (OneToMany) annotation;
             List list = (List)ReflectUtility.getValueFromObject(parent, oneToMany.name());
@@ -29,21 +30,7 @@ public class ReflectUtility {
 
     }
 
-    public static <T> T mapRow(ResultSet rs, List<Integer> columnIndexes, Class<T> clazz) throws Exception{
-
-        T newClazz = clazz.newInstance();
-        for(int index : columnIndexes){
-            String columnName = rs.getMetaData().getColumnName(index);
-            int columnType = rs.getMetaData().getColumnType(index);
-            try {
-                mapColumn(newClazz, columnName, Util.getClassByType(columnType) , rs.getObject(index));
-            }catch (Exception e){}
-        }
-        return newClazz;
-
-    }
-
-    public static <T> void mapColumn(T row, String columnName, Class columnType, Object value) throws Exception{
+    public static <T> void mapValue(T row, String columnName, Class columnType, Object value) throws Exception{
 
         String methodName = Util.toJavaMethodName(columnName, "set");
         Method method = row.getClass().getDeclaredMethod(methodName, columnType);
