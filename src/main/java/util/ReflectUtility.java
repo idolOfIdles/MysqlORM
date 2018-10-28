@@ -82,6 +82,28 @@ public class ReflectUtility {
 
     }
 
+    public static void populateDescentAnnotations(Class clazz, Map<String, Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
+        visited.put(clazz.getSimpleName(), clazz);
+        List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
+        for(Annotation annotation : annotationList){
+            Class type = null;
+            if( annotation instanceof OneToMany){
+                OneToMany oneToMany = (OneToMany) annotation;
+                type = oneToMany.type();
+            }
+            else if( annotation instanceof ManyToOne){
+                ManyToOne manyToOne = (ManyToOne)annotation;
+                type = manyToOne.type();
+            }
+            if(type != null
+                    && visited.containsKey(type.getSimpleName()) == false){
+                parentMap.put(type, new RelationAnnotationInfo(annotation, clazz));
+                populateDescentAnnotations(type, visited, parentMap);
+            }
+
+        }
+    }
+
     public static String getUniqueKeyFromAnnotation(Class clazz) throws Exception{
         List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
         for(Annotation annotation : annotationList){

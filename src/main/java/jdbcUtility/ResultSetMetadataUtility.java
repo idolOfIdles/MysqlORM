@@ -12,6 +12,7 @@ import java.util.*;
  * Created by safayat on 10/26/18.
  */
 public class ResultSetMetadataUtility {
+
     private ResultSetMetaData resultSetMetaData;
     private Map<String, List<Integer>> columnsByTable;
 
