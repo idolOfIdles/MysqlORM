@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Table(name = "subCategory")
+@Table(name = "subCategory", databaseName = "alhelal")
 public class subCategory{
   private Integer id;
   private Date creationDate;

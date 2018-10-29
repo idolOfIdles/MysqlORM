@@ -1,15 +1,14 @@
 package dao;
 
+import config.ConfigManager;
 import jdbcUtility.ResultSetMetadataUtility;
 import jdbcUtility.ResultSetUtility;
 import model.category;
 import model.subCategory;
-import model.user;
 import queryBuilder.MysqlQuery;
 import util.ReflectUtility;
 import util.RelationAnnotationInfo;
 
-import java.lang.annotation.Annotation;
 import java.sql.*;
 import java.util.*;
 
@@ -166,7 +165,6 @@ public class CommonDAO {
         List<String[]> rowsAsKeys = new ArrayList<String[]>();
         while (resultSetUtility.getResultSet().next()){
             String[] rowAsTableKeys = new String[subRowMaps.length];
-
             for(int i=0;i<subRowMaps.length;i++){
                 String tableName = tables[i];
                 String tableKey = resultSetUtility.createTableKeyForCurrentRow(tableName);
@@ -174,8 +172,7 @@ public class CommonDAO {
                 Map<String,Object> subRowMap  = subRowMaps[i];
                 Object subRow = subRowMap.get(tableKey);
                 if(subRow == null){
-                    System.out.println("model."+tables[i]);
-                    Class childClass = Class.forName("model."+tables[i]);
+                    Class childClass = ConfigManager.getInstance().getClassByTableName(tables[i]);
                     Object childObject = resultSetUtility.mapRow(childClass);
                     subRowMap.put(tableKey, childObject);
                 }
@@ -199,19 +196,17 @@ public class CommonDAO {
                         RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(tableClass);
                         if(relationAnnotationInfo != null){
                             Class parentClass = relationAnnotationInfo.getParent();
-                            String parentKey = rowAsKeys[tableIndexByName.get(parentClass.getSimpleName())];
+                            String parentKey = rowAsKeys[tableIndexByName.get(parentClass.getSimpleName().toLowerCase())];
                             if(relationAnnotationInfo.isAlreadyMapped(parentKey, key)) continue;
-                            Object parentObject = subRowMaps[tableIndexByName.get(parentClass.getSimpleName())].get(parentKey);
+                            Object parentObject = subRowMaps[tableIndexByName.get(parentClass.getSimpleName().toLowerCase())].get(parentKey);
                             ReflectUtility.mapRelation(relationAnnotationInfo.getRelationAnnotation(), parentObject, tableObject);
                             relationAnnotationInfo.addMap(parentKey, key);
                         }
                     }
                 }
-
-
             }
         }
-        for(Object o : subRowMaps[tableIndexByName.get(clazz.getSimpleName())].values()){
+        for(Object o : subRowMaps[tableIndexByName.get(clazz.getSimpleName().toLowerCase())].values()){
             data.add((T)o);
         }
         return data;

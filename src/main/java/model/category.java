@@ -1,11 +1,13 @@
 package model;
 
 import annotation.OneToMany;
+import annotation.Table;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Table(name = "category", databaseName = "alhelal")
 public class category{
   private Integer id;
   private Date creationDate;

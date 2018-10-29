@@ -1,7 +1,10 @@
 package model;
 
+import annotation.Table;
+
 import java.util.Date;
 
+@Table(name = "product")
 public class product{
   private Integer id;
   private Date creationDate;

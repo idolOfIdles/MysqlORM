@@ -34,7 +34,7 @@ public class ResultSetMetadataUtility {
                 for (int column = 1; column <= resultSetMetaData.getColumnCount(); column++) {
                     List<Integer> columns = columnsByTable.getOrDefault(resultSetMetaData.getTableName(column), new ArrayList<Integer>());
                     if (columns.size() == 0) {
-                        columnsByTable.put(resultSetMetaData.getTableName(column), columns);
+                        columnsByTable.put(resultSetMetaData.getTableName(column).toLowerCase(), columns);
                     }
                     columns.add(column);
                 }
@@ -49,11 +49,11 @@ public class ResultSetMetadataUtility {
 
     }
     public List<Integer> getColumnIndexes(String table) {
-        return getColumnIndexesByTable().get(table);
+        return getColumnIndexesByTable().get(table.toLowerCase());
     }
 
     public int getColumnIndex(String tableName, String columnName) throws Exception{
-        List<Integer> columnIndexes = getColumnIndexesByTable().get(tableName);
+        List<Integer> columnIndexes = getColumnIndexesByTable().get(tableName.toLowerCase());
         for(int index : columnIndexes){
             String clName = resultSetMetaData.getColumnName(index);
             if(columnName.equals(clName)) return index;
@@ -65,8 +65,8 @@ public class ResultSetMetadataUtility {
         return resultSetMetaData.getColumnCount();
     }
 
-    public Set<String> getTables() throws Exception{
-        return getColumnIndexesByTable().keySet();
+    public String[] getTables() throws Exception{
+        return getColumnIndexesByTable().keySet().toArray(new String[0]);
     }
 
 
