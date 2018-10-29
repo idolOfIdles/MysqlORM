@@ -2,11 +2,13 @@ package model;
 
 import annotation.ManyToOne;
 import annotation.OneToMany;
+import annotation.Table;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@Table(name = "subCategory")
 public class subCategory{
   private Integer id;
   private Date creationDate;

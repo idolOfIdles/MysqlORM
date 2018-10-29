@@ -20,13 +20,13 @@ public class CommonDAO {
 
     private String dbUserName = "root";
 
-    private String dbPassword = "root";
+//    private String dbPassword = "root";
+    private String dbPassword = "";
 
-//        private String dbName  = "rssdesk";
     private String dbName  = "alhelal";
 
-//        private String dbUrl = "jdbc:mysql://localhost:3306/rssdesk?useSSL=false";
-    private String dbUrl = "jdbc:mysql://localhost:3306/alhelal";
+        private String dbUrl = "jdbc:mysql://localhost:3306/alhelal?useSSL=false";
+//    private String dbUrl = "jdbc:mysql://localhost:3306/alhelal";
 
 
 
@@ -174,6 +174,7 @@ public class CommonDAO {
                 Map<String,Object> subRowMap  = subRowMaps[i];
                 Object subRow = subRowMap.get(tableKey);
                 if(subRow == null){
+                    System.out.println("model."+tables[i]);
                     Class childClass = Class.forName("model."+tables[i]);
                     Object childObject = resultSetUtility.mapRow(childClass);
                     subRowMap.put(tableKey, childObject);

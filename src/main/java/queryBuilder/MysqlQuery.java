@@ -1,7 +1,10 @@
 package queryBuilder;
 
 import dao.CommonDAO;
+import model.subCategory;
+import util.FileManager;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Date;
@@ -110,10 +113,25 @@ public class MysqlQuery implements MysqlQueryInterface{
 
     public static void main(String[] args){
         try {
-//            new CommonDAO().getAllstudents();
 //            new CommonDAO().getSubcategorys();
-            new CommonDAO().getCategorys();
+//            new CommonDAO().getCategorys();
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            Class[] classes = FileManager.getClasses("model");
+            for(Class cl : classes) System.out.println(cl);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            System.out.println(Class.forName(subCategory.class.getName()));
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
