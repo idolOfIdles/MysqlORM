@@ -2,7 +2,7 @@ package model;
 
 import java.util.Date;
 
-public class person{
+public class Person {
   private Integer id;
   private Date creationDate;
   private Date updateDate;

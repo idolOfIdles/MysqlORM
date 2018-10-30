@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 
 @Table(name = "subCategory", databaseName = "alhelal")
-public class subCategory{
+public class SubCategory {
   private Integer id;
   private Date creationDate;
   private Date updateDate;
@@ -18,33 +18,33 @@ public class subCategory{
   private String subCategoryCode;
   private String subCategoryName;
   private Integer categoryId;
-  private category category;
+  private Category Category;
 
-  List<product> productList;
+  List<Product> productList;
 
-  public subCategory() {
-    productList = new ArrayList<product>();
+  public SubCategory() {
+    productList = new ArrayList<Product>();
   }
 
   @OneToMany(outer = "id"
           , inner = "subCategoryId"
-          , type = product.class
+          , type = Product.class
           , name = "productList")
-  public List<product> getProductList() {
+  public List<Product> getProductList() {
     return productList;
   }
 
-  public void setProductList(List<product> productList) {
+  public void setProductList(List<Product> productList) {
     this.productList = productList;
   }
 
-  public category getCategory() {
-    return category;
+  public Category getCategory() {
+    return Category;
   }
 
-  @ManyToOne(inner = "categoryId", outer = "id", type = category.class, name = "category")
-  public void setCategory(category category) {
-    this.category = category;
+  @ManyToOne(inner = "categoryId", outer = "id", type = Category.class, name = "category")
+  public void setCategory(Category Category) {
+    this.Category = Category;
   }
 
   public Integer getId(){

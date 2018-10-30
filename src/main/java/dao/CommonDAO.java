@@ -1,13 +1,9 @@
 package dao;
 
-import config.ConfigManager;
-import jdbcUtility.ResultSetMetadataUtility;
 import jdbcUtility.ResultSetUtility;
-import model.category;
-import model.subCategory;
+import model.Category;
+import model.SubCategory;
 import queryBuilder.MysqlQuery;
-import util.ReflectUtility;
-import util.RelationAnnotationInfo;
 
 import java.sql.*;
 import java.util.*;
@@ -69,11 +65,11 @@ public class CommonDAO {
     }
 
 
-    public List<subCategory> getSubcategorys() throws Exception{
+    public List<SubCategory> getSubcategorys() throws Exception{
 
         Connection dbConnection = null;
         PreparedStatement statement = null;
-        List<subCategory> subCategorys = new ArrayList<subCategory>();
+        List<SubCategory> SubCategories = new ArrayList<SubCategory>();
         try {
             MysqlQuery sqlQuery = MysqlQuery.get()
                     .table("subCategory", "sc")
@@ -87,7 +83,7 @@ public class CommonDAO {
             statement = dbConnection.prepareStatement(sql);
             ResultSet rs = statement.executeQuery();
             ResultSetUtility resultSetUtility = new ResultSetUtility(rs);
-            return resultSetUtility.mapResultsetToClass(subCategory.class);
+            return resultSetUtility.mapResultsetToClass(SubCategory.class);
 
 
         } catch (SQLException e) {
@@ -107,14 +103,14 @@ public class CommonDAO {
                 }
             }
         }
-        return subCategorys;
+        return SubCategories;
     }
 
-    public List<category> getCategorys() throws Exception{
+    public List<Category> getCategorys() throws Exception{
 
         Connection dbConnection = null;
         PreparedStatement statement = null;
-        List<category> subCategorys = new ArrayList<category>();
+        List<Category> subCategories = new ArrayList<Category>();
         try {
             MysqlQuery sqlQuery = MysqlQuery.get()
                     .table("subCategory", "sc")
@@ -129,7 +125,7 @@ public class CommonDAO {
             statement = dbConnection.prepareStatement(sql);
             ResultSet rs = statement.executeQuery();
             ResultSetUtility resultSetUtility = new ResultSetUtility(rs);
-            return resultSetUtility.mapResultsetToClass(category.class);
+            return resultSetUtility.mapResultsetToClass(Category.class);
 
 
         } catch (SQLException e) {
@@ -149,7 +145,7 @@ public class CommonDAO {
                 }
             }
         }
-        return subCategorys;
+        return subCategories;
     }
 
 }

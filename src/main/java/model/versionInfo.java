@@ -2,7 +2,7 @@ package model;
 
 import java.util.Date;
 
-public class versionInfo{
+public class VersionInfo {
   private String tableName;
   private Date updateDate;
   public String getTableName(){

@@ -1,15 +1,10 @@
 package queryBuilder;
 
 import dao.CommonDAO;
-import model.subCategory;
 import util.FileManager;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -118,8 +113,6 @@ public class MysqlQuery implements MysqlQueryInterface{
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
         try {
             Class[] classes = FileManager.getClasses("model");
             for(Class cl : classes) System.out.println(cl);
@@ -128,14 +121,6 @@ public class MysqlQuery implements MysqlQueryInterface{
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        try {
-            System.out.println(Class.forName(subCategory.class.getName()));
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-
     }
 
 }

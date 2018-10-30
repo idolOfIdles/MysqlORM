@@ -8,7 +8,7 @@ import java.util.Date;
 import java.util.List;
 
 @Table(name = "category", databaseName = "alhelal")
-public class category{
+public class Category {
   private Integer id;
   private Date creationDate;
   private Date updateDate;
@@ -16,21 +16,21 @@ public class category{
   private String categoryName;
   private String description;
   private String status;
-  private List<subCategory> subCategories;
+  private List<SubCategory> subCategories;
 
-  public category() {
-    subCategories = new ArrayList<subCategory>();
+  public Category() {
+    subCategories = new ArrayList<SubCategory>();
   }
 
   @OneToMany(outer = "id"
           , inner = "categoryId"
-          , type = subCategory.class
+          , type = SubCategory.class
           , name = "subCategories")
-  public List<subCategory> getSubCategories() {
+  public List<SubCategory> getSubCategories() {
     return subCategories;
   }
 
-  public void setSubCategories(List<subCategory> subCategories) {
+  public void setSubCategories(List<SubCategory> subCategories) {
     this.subCategories = subCategories;
   }
 
