@@ -120,7 +120,8 @@ public class ReflectUtility {
     public static List<Method> getParsedGetMethods(Class clazz){
         return Stream.of(clazz.getDeclaredMethods())
                 .filter(m->m.getName()
-                    .startsWith("get"))
+                    .startsWith("get") &&
+                        ( !m.isAnnotationPresent(OneToMany.class) && !m.isAnnotationPresent(ManyToOne.class)) )
                             .collect(Collectors.toList());
 
     }
@@ -131,7 +132,7 @@ public class ReflectUtility {
                 .stream()
                     .map(m -> Util.methodToVariableName(m.getName()))
                                                             .collect(Collectors.toList());
-        StringBuilder stringBuilder = new StringBuilder("Insert into ")
+        StringBuilder stringBuilder = new StringBuilder("insert into ")
                                         .append(ConfigManager.getInstance()
                                                 .getTableName(o.getClass()))
                                                     .append("(")
@@ -140,18 +141,17 @@ public class ReflectUtility {
 
 
 
-        StringBuilder values = new StringBuilder();
 
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);
             try {
-                values.append(method.invoke(o).toString());
+                stringBuilder.append(Util.toQuote(method.invoke(o).toString()));
             } catch (Exception e) {
-                values.append("");
+                stringBuilder.append("NULL");
             }
-            if(i<getMethods.size()-1)values.append(",");
+            if(i<getMethods.size()-1)stringBuilder.append(",");
         }
-        values.append(")");
+        stringBuilder.append(")");
         return stringBuilder.toString();
 
 

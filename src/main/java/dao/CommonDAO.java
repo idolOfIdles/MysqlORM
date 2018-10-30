@@ -109,9 +109,10 @@ public class CommonDAO {
         Table table = tClass.getAnnotation(Table.class);
         String sql = MysqlQuery.get()
                 .table(table.name())
-                .filter(table.primaryKeyColumn()+ "=", id.toString())
+                .filter(table.primaryKeyColumn() + "=", id.toString())
+                .getQuery()
                 .toString();
-
+        System.out.println(sql);
         ResultSetUtility resultSetUtility = executeQuery(sql);
         try {
             if(resultSetUtility!=null && resultSetUtility.getResultSet().next()){
@@ -124,8 +125,9 @@ public class CommonDAO {
 
     }
 
-    private <T> void insert(T t) {
-        execute(ReflectUtility.createInsertValueSqlString(t));
+    public <T> void insert(T t) {
+        String sql =  ReflectUtility.createInsertValueSqlString(t);
+        execute(sql);
     }
 
     public  <T> List<T> getAll(Class<T> tClass, MysqlQuery q) {

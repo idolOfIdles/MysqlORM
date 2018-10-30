@@ -1,6 +1,7 @@
 package queryBuilder;
 
 import dao.CommonDAO;
+import model.Category;
 import util.FileManager;
 
 import java.io.IOException;
@@ -109,18 +110,16 @@ public class MysqlQuery implements MysqlQueryInterface{
     public static void main(String[] args){
         try {
 //            new CommonDAO().getSubcategorys();
-            new CommonDAO().getCategorys();
+            CommonDAO commonDAO = new CommonDAO();
+            Category category = commonDAO.get(Category.class, 9);
+            System.out.println(category);
+            commonDAO.insert(category);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        try {
-            Class[] classes = FileManager.getClasses("model");
-            for(Class cl : classes) System.out.println(cl);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
     }
 
 }
