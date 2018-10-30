@@ -15,9 +15,20 @@ public class ResultSetMetadataUtility {
 
     private ResultSetMetaData resultSetMetaData;
     private Map<String, List<Integer>> columnsByTable;
+    private Map<String, Integer> tableIndexByName;
+    private String[] tables;
 
     public ResultSetMetadataUtility(ResultSetMetaData resultSetMetaData) {
+
         this.resultSetMetaData = resultSetMetaData;
+
+        tables = getColumnIndexesByTable().keySet().toArray(new String[0]);
+
+        tableIndexByName = new HashMap<String, Integer>();
+        for(int i=0;i<tables.length;i++){
+            tableIndexByName.put(tables[i], i);
+        }
+
     }
 
     public ResultSetMetaData get() {
@@ -65,8 +76,20 @@ public class ResultSetMetadataUtility {
         return resultSetMetaData.getColumnCount();
     }
 
-    public String[] getTables() throws Exception{
-        return getColumnIndexesByTable().keySet().toArray(new String[0]);
+    public String[] getTables(){
+        return tables;
+    }
+
+    public Integer getTableIndex(String name){
+        return tableIndexByName.get(name.toLowerCase());
+    }
+
+    public Integer getTableCount(){
+        return tables.length;
+    }
+
+    public String getTable(int index){
+        return tables[index];
     }
 
 

@@ -17,7 +17,8 @@ public class ConfigManager {
 
     private String dbUserName = "root";
 
-    private String dbPassword = "root";
+//    private String dbPassword = "root";
+    private String dbPassword = "";
 
     //        private String dbName  = "rssdesk";
     private String dbName  = "alhelal";
@@ -67,11 +68,11 @@ public class ConfigManager {
     public Class getClassByTableName(String table, String databaseName) {
         Class tableClass = null;
         if(databaseClassTableMap.containsKey(databaseName))
-            tableClass = databaseClassTableMap.get(databaseName).get(tableClass);
+            tableClass = databaseClassTableMap.get(databaseName).get(table);
 
         if(tableClass == null){
             try {
-                tableClass = Class.forName(table);
+                tableClass = Class.forName("model." + table);
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }

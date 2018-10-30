@@ -86,8 +86,8 @@ public class CommonDAO {
             dbConnection = getConnection();
             statement = dbConnection.prepareStatement(sql);
             ResultSet rs = statement.executeQuery();
-
-            return getData2(subCategory.class, rs);
+            ResultSetUtility resultSetUtility = new ResultSetUtility(rs);
+            return resultSetUtility.mapResultsetToClass(subCategory.class);
 
 
         } catch (SQLException e) {
@@ -128,8 +128,8 @@ public class CommonDAO {
             dbConnection = getConnection();
             statement = dbConnection.prepareStatement(sql);
             ResultSet rs = statement.executeQuery();
-
-            return getData2(category.class, rs);
+            ResultSetUtility resultSetUtility = new ResultSetUtility(rs);
+            return resultSetUtility.mapResultsetToClass(category.class);
 
 
         } catch (SQLException e) {
@@ -151,66 +151,5 @@ public class CommonDAO {
         }
         return subCategorys;
     }
-
-    public <T> List<T> getData2(Class<T> clazz, ResultSet resultSet) throws Exception{
-
-        ResultSetUtility resultSetUtility = new ResultSetUtility(resultSet);
-        ResultSetMetadataUtility resultSetMetadataUtility = resultSetUtility.getMetadata();
-        String[] tables = resultSetMetadataUtility.getTables().toArray(new String[0]);
-        Map<String, Integer> tableIndexByName = new HashMap<String, Integer>();
-        for(int i=0;i<tables.length;i++)tableIndexByName.put(tables[i], i);
-        Map<String, Object>[] subRowMaps = new Map[tables.length];
-        for(int i=0;i<subRowMaps.length;i++) subRowMaps[i] = new HashMap<String, Object>();
-
-        List<String[]> rowsAsKeys = new ArrayList<String[]>();
-        while (resultSetUtility.getResultSet().next()){
-            String[] rowAsTableKeys = new String[subRowMaps.length];
-            for(int i=0;i<subRowMaps.length;i++){
-                String tableName = tables[i];
-                String tableKey = resultSetUtility.createTableKeyForCurrentRow(tableName);
-                rowAsTableKeys[i] = tableKey;
-                Map<String,Object> subRowMap  = subRowMaps[i];
-                Object subRow = subRowMap.get(tableKey);
-                if(subRow == null){
-                    Class childClass = ConfigManager.getInstance().getClassByTableName(tables[i]);
-                    Object childObject = resultSetUtility.mapRow(childClass);
-                    subRowMap.put(tableKey, childObject);
-                }
-            }
-            rowsAsKeys.add(rowAsTableKeys);
-        }
-
-        Map<String, Class> relatedClassByName = new HashMap<String, Class>();
-        Map<Class, RelationAnnotationInfo> parentClassMap = new HashMap<Class, RelationAnnotationInfo>();
-        ReflectUtility.populateDescentAnnotations(clazz, relatedClassByName, parentClassMap);
-        List<T> data = new ArrayList<T>();
-        for(int rowIndex=0;rowIndex<rowsAsKeys.size();rowIndex++){
-            String[] rowAsKeys = rowsAsKeys.get(rowIndex);
-            for(int tableIndex=0;tableIndex<tables.length;tableIndex++){
-                String tableName = tables[tableIndex];
-                Class tableClass = relatedClassByName.get(tableName);
-                String key = rowAsKeys[tableIndex];
-                if(tableClass != null){
-                    Object tableObject = subRowMaps[tableIndex].get(key);
-                    if( !tableName.equalsIgnoreCase(clazz.getSimpleName())){
-                        RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(tableClass);
-                        if(relationAnnotationInfo != null){
-                            Class parentClass = relationAnnotationInfo.getParent();
-                            String parentKey = rowAsKeys[tableIndexByName.get(parentClass.getSimpleName().toLowerCase())];
-                            if(relationAnnotationInfo.isAlreadyMapped(parentKey, key)) continue;
-                            Object parentObject = subRowMaps[tableIndexByName.get(parentClass.getSimpleName().toLowerCase())].get(parentKey);
-                            ReflectUtility.mapRelation(relationAnnotationInfo.getRelationAnnotation(), parentObject, tableObject);
-                            relationAnnotationInfo.addMap(parentKey, key);
-                        }
-                    }
-                }
-            }
-        }
-        for(Object o : subRowMaps[tableIndexByName.get(clazz.getSimpleName().toLowerCase())].values()){
-            data.add((T)o);
-        }
-        return data;
-    }
-
 
 }

@@ -4,7 +4,7 @@ import annotation.Table;
 
 import java.util.Date;
 
-@Table(name = "product")
+@Table(name = "product", databaseName = "alhelal")
 public class product{
   private Integer id;
   private Date creationDate;

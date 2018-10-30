@@ -114,7 +114,7 @@ public class MysqlQuery implements MysqlQueryInterface{
     public static void main(String[] args){
         try {
 //            new CommonDAO().getSubcategorys();
-//            new CommonDAO().getCategorys();
+            new CommonDAO().getCategorys();
         } catch (Exception e) {
             e.printStackTrace();
         }

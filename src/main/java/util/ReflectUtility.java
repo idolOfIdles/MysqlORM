@@ -70,7 +70,7 @@ public class ReflectUtility {
     }
 
     public static void populateDescentAnnotations(Class clazz, Map<String, Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
-        visited.put(clazz.getSimpleName(), clazz);
+        visited.put(clazz.getSimpleName().toLowerCase(), clazz);
         List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
         for(Annotation annotation : annotationList){
             Class type = null;
@@ -83,7 +83,7 @@ public class ReflectUtility {
                 type = manyToOne.type();
             }
             if(type != null
-                    && visited.containsKey(type.getSimpleName()) == false){
+                    && visited.containsKey(type.getSimpleName().toLowerCase()) == false){
                 parentMap.put(type, new RelationAnnotationInfo(annotation, clazz));
                 populateDescentAnnotations(type, visited, parentMap);
             }
