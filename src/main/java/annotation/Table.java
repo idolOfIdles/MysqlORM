@@ -11,6 +11,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Table {
+    String primaryKeyColumn() default "";
+    String primaryKey() default "";
     String name() default "";
     String databaseName() default "";
 }

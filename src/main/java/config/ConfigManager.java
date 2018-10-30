@@ -14,6 +14,7 @@ import java.util.Map;
 public class ConfigManager {
     private static ConfigManager ourInstance = new ConfigManager();
     private Map<String, Map<String, Class>> databaseClassTableMap;
+    private Map<Class, Table> tableAnnotationByClass;
 
     private String dbUserName = "root";
 
@@ -38,6 +39,7 @@ public class ConfigManager {
 
     private void populateTableMapping() {
         databaseClassTableMap = new HashMap<String, Map<String, Class>>();
+        tableAnnotationByClass = new HashMap<Class, Table>();
         Class[] tableClasses = null;
         try {
             tableClasses = FileManager.getClasses("model");
@@ -51,6 +53,7 @@ public class ConfigManager {
                         databaseClassTableMap.put(table.databaseName(), classByTable);
                     }
                     classByTable.put(table.name().toLowerCase(), tableClazz);
+                    tableAnnotationByClass.put(tableClazz, table);
                 }
             }
         } catch (ClassNotFoundException e) {
@@ -63,6 +66,14 @@ public class ConfigManager {
 
     public Class getClassByTableName(String table) {
         return getClassByTableName(table, dbName);
+    }
+
+    public String getTableName(Class tableClass) {
+        Table table = tableAnnotationByClass.get(tableClass);
+        if(table!=null){
+            return table.name();
+        }
+        return tableClass.getSimpleName();
     }
 
     public Class getClassByTableName(String table, String databaseName) {

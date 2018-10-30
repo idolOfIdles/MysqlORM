@@ -7,7 +7,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Table(name = "category", databaseName = "alhelal")
+@Table(name = "category"
+        , databaseName = "alhelal"
+        , primaryKey = "id"
+        , primaryKeyColumn = "id")
 public class Category {
   private Integer id;
   private Date creationDate;

@@ -8,7 +8,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Table(name = "subCategory", databaseName = "alhelal")
+@Table(name = "subCategory"
+        , databaseName = "alhelal"
+        , primaryKeyColumn = "id"
+        , primaryKey = "id"
+)
 public class SubCategory {
   private Integer id;
   private Date creationDate;

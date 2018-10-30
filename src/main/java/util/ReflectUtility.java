@@ -2,14 +2,18 @@ package util;
 
 import annotation.ManyToOne;
 import annotation.OneToMany;
+import config.ConfigManager;
 import jdbcUtility.ResultSetMetadataUtility;
 import jdbcUtility.ResultSetUtility;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by safayat on 10/22/18.
@@ -35,7 +39,7 @@ public class ReflectUtility {
         String methodName = Util.toJavaMethodName(columnName, "set");
         Method method = row.getClass().getDeclaredMethod(methodName, columnType);
         if(method!=null){
-            method.invoke(row,value);
+            method.invoke(row, value);
         }
 
     }
@@ -112,5 +116,46 @@ public class ReflectUtility {
         return parentClassUniqueFieldIndex;
 
     }
+
+    public static List<Method> getParsedGetMethods(Class clazz){
+        return Stream.of(clazz.getDeclaredMethods())
+                .filter(m->m.getName()
+                    .startsWith("get"))
+                            .collect(Collectors.toList());
+
+    }
+
+    public static String createInsertValueSqlString(Object o){
+        List<Method> getMethods = getParsedGetMethods(o.getClass());
+        List<String> variableNames = getMethods
+                .stream()
+                    .map(m -> Util.methodToVariableName(m.getName()))
+                                                            .collect(Collectors.toList());
+        StringBuilder stringBuilder = new StringBuilder("Insert into ")
+                                        .append(ConfigManager.getInstance()
+                                                .getTableName(o.getClass()))
+                                                    .append("(")
+                                                        .append(Util.listAsString(variableNames))
+                                                            .append(") values(");
+
+
+
+        StringBuilder values = new StringBuilder();
+
+        for(int i=0;i<getMethods.size();i++){
+            Method method = getMethods.get(i);
+            try {
+                values.append(method.invoke(o).toString());
+            } catch (Exception e) {
+                values.append("");
+            }
+            if(i<getMethods.size()-1)values.append(",");
+        }
+        values.append(")");
+        return stringBuilder.toString();
+
+
+    }
+
 
 }
