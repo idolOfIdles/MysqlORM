@@ -1,12 +1,16 @@
 package config;
 
 import annotation.Table;
+import dao.CommonDAO;
+import queryBuilder.MysqlQuery;
 import util.FileManager;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by safayat on 10/29/18.
@@ -16,25 +20,36 @@ public class ConfigManager {
     private Map<String, Map<String, Class>> databaseClassTableMap;
     private Map<Class, Table> tableAnnotationByClass;
 
-    private String dbUserName = "root";
-
-//    private String dbPassword = "root";
-    private String dbPassword = "";
-
-    //        private String dbName  = "rssdesk";
-    private String dbName  = "alhelal";
-
-    //        private String dbUrl = "jdbc:mysql://localhost:3306/rssdesk?useSSL=false";
-    private String dbUrl = "jdbc:mysql://localhost:3306/alhelal";
+    private static String dbUserName;
+    private static String dbPassword;
+    private static String dbName;
+    private static String dbUrl;
 
 
     public static ConfigManager getInstance() {
         return ourInstance;
     }
 
-    private ConfigManager() {
+    private ConfigManager(){
         populateTableMapping();
+        try {
+            readProperties();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+    }
+
+    public void readProperties() throws IOException {
+        final Properties properties = new Properties();
+        String propertyFileName = "database.properties";
+        properties.load(getClass()
+                .getClassLoader()
+                .getResourceAsStream(propertyFileName));
+        dbName = properties.getProperty("db.name");
+        dbUserName = properties.getProperty("db.user");
+        dbUrl = properties.getProperty("db.url");
+        dbPassword = properties.getProperty("db.password");
     }
 
     private void populateTableMapping() {

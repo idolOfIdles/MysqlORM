@@ -24,7 +24,6 @@ public class MysqlTable implements MysqlQueryInterface{
         if(tableSelectedOnce) mysqlQuery.getQuery().append(",");
         tableSelectedOnce = true;
         mysqlQuery.getQuery().append(tableName).append(" ").append(code);
-        mysqlQuery.getQuery().addToAlias(tableName, code);
 
         return this;
     }
@@ -39,7 +38,6 @@ public class MysqlTable implements MysqlQueryInterface{
         if(tableSelectedOnce) mysqlQuery.getQuery().append(",");
         tableSelectedOnce = true;
         mysqlQuery.getQuery().append(tableName).append(" ").append(code);
-        mysqlQuery.getQuery().addToAlias(tableName, code);
 
         return this;
 
@@ -47,13 +45,11 @@ public class MysqlTable implements MysqlQueryInterface{
 
     public MysqlJoin join(String tableName, String code){
         mysqlQuery.getQuery().append(" join ").append(tableName).append(" ").append(code);
-        mysqlQuery.getQuery().addToAlias(tableName, code);
 
         return mysqlJoin;
     }
     public MysqlJoin leftJoin(String tableName, String code){
         mysqlQuery.getQuery().append(" left join ").append(tableName).append(" ").append(code);
-        mysqlQuery.getQuery().addToAlias(tableName, code);
 
         return mysqlJoin;
     }
@@ -62,7 +58,6 @@ public class MysqlTable implements MysqlQueryInterface{
         String[] splitted = tableName.split(" ");
         tableName = splitted[0];
         String code = splitted.length > 1 ? splitted[1] : "";
-        mysqlQuery.getQuery().addToAlias(tableName, code);
 
         mysqlQuery.getQuery().append(" right join ").append(tableName).append(" ").append(code);
         return mysqlJoin;
@@ -72,7 +67,6 @@ public class MysqlTable implements MysqlQueryInterface{
         String[] splitted = tableName.split(" ");
         tableName = splitted[0];
         String code = splitted.length > 1 ? splitted[1] : "";
-        mysqlQuery.getQuery().addToAlias(tableName, code);
         mysqlQuery.getQuery().append(" join ").append(tableName).append(" ").append(code);
         return mysqlJoin;
     }
@@ -81,13 +75,11 @@ public class MysqlTable implements MysqlQueryInterface{
         tableName = splitted[0];
         String code = splitted.length > 1 ? splitted[1] : "";
         mysqlQuery.getQuery().append(" left join ").append(tableName).append(" ").append(code);
-        mysqlQuery.getQuery().addToAlias(tableName, code);
         return mysqlJoin;
     }
 
     public MysqlJoin rightJoin(String tableName, String code){
         mysqlQuery.getQuery().append(" right join ").append(tableName).append(" ").append(code);
-        mysqlQuery.getQuery().addToAlias(tableName, code);
 
         return mysqlJoin;
     }

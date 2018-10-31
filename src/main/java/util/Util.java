@@ -56,7 +56,7 @@ public class Util {
         return list;
 
     }
-    public static Class getClassByType(int type) {
+    public static Class getClassByMysqlType(int type) {
         if(type == Types.BIGINT) return Long.class;
         if(type == Types.INTEGER) return Integer.class;
         if(type == Types.BINARY) return Boolean.class;

@@ -7,6 +7,7 @@ import util.Util;
 
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -28,6 +29,10 @@ public class ResultSetUtility {
 
     public ResultSetMetadataUtility getMetadata() {
         return metadata;
+    }
+
+    public boolean next() throws SQLException {
+        return resultSet.next();
     }
 
     public String createTableKeyForCurrentRow(String table){
@@ -64,7 +69,7 @@ public class ResultSetUtility {
         try {
             Object value = getResultSet().getObject(index);
             String methodName = Util.toJavaMethodName(columnName, "set");
-            Method method = row.getClass().getDeclaredMethod(methodName, Util.getClassByType(columnType));
+            Method method = row.getClass().getDeclaredMethod(methodName, Util.getClassByMysqlType(columnType));
             if(method!=null){
                 method.invoke(row,value);
             }
