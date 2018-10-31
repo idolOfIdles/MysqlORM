@@ -2,6 +2,7 @@ package queryBuilder;
 
 import dao.CommonDAO;
 import model.Category;
+import model.Product;
 import util.FileManager;
 
 import java.io.IOException;
@@ -111,9 +112,10 @@ public class MysqlQuery implements MysqlQueryInterface{
         try {
 //            new CommonDAO().getSubcategorys();
             CommonDAO commonDAO = new CommonDAO();
-            Category category = commonDAO.get(Category.class, 9);
-            System.out.println(category);
-            commonDAO.insert(category);
+            Product product = commonDAO.get(Product.class, 1);
+            System.out.println(product);
+            product.setDescription("ffffffksjksjdksdjskldjklsjdklsjdklsjkdl");
+            commonDAO.update(product);
 
 
         } catch (Exception e) {

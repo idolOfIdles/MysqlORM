@@ -2,6 +2,7 @@ package util;
 
 import annotation.ManyToOne;
 import annotation.OneToMany;
+import annotation.Table;
 import config.ConfigManager;
 import jdbcUtility.ResultSetMetadataUtility;
 import jdbcUtility.ResultSetUtility;
@@ -25,7 +26,7 @@ public class ReflectUtility {
         if(annotation instanceof ManyToOne){
             ManyToOne oneToMany = (ManyToOne) annotation;
             Class type = oneToMany.type();
-            ReflectUtility.mapValue(parent,oneToMany.name(),type, child);
+            ReflectUtility.mapValue(parent, oneToMany.name(), type, child);
         }else if( annotation instanceof  OneToMany){
             OneToMany oneToMany = (OneToMany) annotation;
             List list = (List)ReflectUtility.getValueFromObject(parent, oneToMany.name());
@@ -119,14 +120,14 @@ public class ReflectUtility {
 
     public static List<Method> getParsedGetMethods(Class clazz){
         return Stream.of(clazz.getDeclaredMethods())
-                .filter(m->m.getName()
-                    .startsWith("get") &&
-                        ( !m.isAnnotationPresent(OneToMany.class) && !m.isAnnotationPresent(ManyToOne.class)) )
+                .filter(m -> m.getName()
+                        .startsWith("get") &&
+                        (!m.isAnnotationPresent(OneToMany.class) && !m.isAnnotationPresent(ManyToOne.class)))
                             .collect(Collectors.toList());
 
     }
 
-    public static String createInsertValueSqlString(Object o){
+    public static String createInsertSqlString(Object o){
         List<Method> getMethods = getParsedGetMethods(o.getClass());
         List<String> variableNames = getMethods
                 .stream()
@@ -156,6 +157,39 @@ public class ReflectUtility {
 
 
     }
+    public static String createSingleRowUpdateSqlString(Object o) throws Exception{
+        Table table = o.getClass().getAnnotation(Table.class);
+        List<Method> getMethods = getParsedGetMethods(o.getClass());
+        StringBuilder stringBuilder
+                = new StringBuilder("update ")
+                .append(ConfigManager.getInstance().getTableName(o.getClass()))
+                .append(" set ");
 
+        String primaryKeyValue = null;
+        for(int i=0;i<getMethods.size();i++){
+            Method method = getMethods.get(i);
+            String columnName = Util.methodToVariableName(method.getName());
+            try {
+                Object value = Util.toQuote(method.invoke(o).toString());
+                if(columnName.equals(table.primaryKey())){
+                    primaryKeyValue = value.toString();
+                }else {
+                    stringBuilder
+                            .append(columnName).append("=")
+                            .append(Util.toQuote(method.invoke(o).toString()));
+                    if(i<getMethods.size()-1)stringBuilder.append(",");
+                }
+            } catch (Exception e) {
+            }
+        }
+        if(primaryKeyValue == null) throw new Exception("Primary key/value not found");
+        stringBuilder.append(" WHERE ")
+                .append(table.primaryKeyColumn())
+                .append("=")
+                .append(primaryKeyValue);
+        return stringBuilder.toString();
+
+
+    }
 
 }

@@ -7,9 +7,7 @@ import model.Category;
 import model.SubCategory;
 import queryBuilder.MysqlQuery;
 import util.ReflectUtility;
-import util.Util;
 
-import java.lang.annotation.Annotation;
 import java.sql.*;
 import java.util.*;
 
@@ -125,9 +123,19 @@ public class CommonDAO {
 
     }
 
-    public <T> void insert(T t) {
-        String sql =  ReflectUtility.createInsertValueSqlString(t);
+    public void insert(Object t) {
+        String sql =  ReflectUtility.createInsertSqlString(t);
         execute(sql);
+    }
+
+    public void update(Object t) {
+        try {
+            String sql = ReflectUtility.createSingleRowUpdateSqlString(t);
+            System.out.println(sql);
+            execute(sql);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public  <T> List<T> getAll(Class<T> tClass, MysqlQuery q) {
