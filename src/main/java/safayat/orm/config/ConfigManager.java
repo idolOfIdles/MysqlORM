@@ -30,12 +30,13 @@ public class ConfigManager {
     }
 
     private ConfigManager(){
-        populateTableMapping();
         try {
             readProperties();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        populateTableMapping();
+
 
     }
 
@@ -58,7 +59,7 @@ public class ConfigManager {
         tableAnnotationByClass = new HashMap<Class, Table>();
         Class[] tableClasses = null;
         try {
-            tableClasses = FileManager.getClasses("safayat/orm/model");
+            tableClasses = FileManager.getClasses(modelPackageName);
             for(Class tableClazz : tableClasses){
                 Annotation annotation = tableClazz.getAnnotation(Table.class);
                 if(annotation != null){
