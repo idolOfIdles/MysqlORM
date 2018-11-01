@@ -1,0 +1,3 @@
+1. Support aggregate query mapping
+2. Many to Many
+3.
