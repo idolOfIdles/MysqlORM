@@ -40,9 +40,9 @@ public class ResultSetUtility {
         List<Integer> columnIndexes = metadata.getColumnIndexes(table);
         StringBuilder keyBuilder = new StringBuilder();
         for(int columnIndex : columnIndexes){
-            String columnValue = "";
+            Object columnValue = null;
             try {
-                columnValue = getColumnValue(columnIndex).toString();
+                columnValue = getColumnValue(columnIndex);
                 keyBuilder.append(columnValue);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -139,7 +139,7 @@ public class ResultSetUtility {
         }
 
         List<String[]> rowsMappedAsKeys = new ArrayList<String[]>();
-        while (this.getResultSet().next()){
+        while (getResultSet().next()){
             String[] rowAsTableKeys = new String[subRowMaps.length];
             for(int i=0;i<subRowMaps.length;i++){
                 String tableName =  metadata.getTable(i);
@@ -149,8 +149,10 @@ public class ResultSetUtility {
                 Object subRow = subRowMap.get(tableKey);
                 if(subRow == null){
                     Class childClass = ConfigManager.getInstance().getClassByTableName(tableName);
-                    Object childObject = this.mapRow(childClass);
-                    subRowMap.put(tableKey, childObject);
+                    if(childClass != null){
+                        Object childObject = this.mapRow(childClass);
+                        subRowMap.put(tableKey, childObject);
+                    }
                 }
             }
             rowsMappedAsKeys.add(rowAsTableKeys);
@@ -176,6 +178,7 @@ public class ResultSetUtility {
                 String key = rowAsKeys[tableIndex];
                 if(tableClass != null){
                     Object tableObject = subRowMaps[tableIndex].get(key);
+                    if(tableObject == null) continue;
                     if( tableName.equalsIgnoreCase(clazz.getSimpleName()) == false){
                         RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(tableClass);
                         if(relationAnnotationInfo != null){

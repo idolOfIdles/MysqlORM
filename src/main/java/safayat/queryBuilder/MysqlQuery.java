@@ -1,7 +1,11 @@
 package safayat.queryBuilder;
 
 import safayat.orm.dao.CommonDAO;
+import safayat.orm.model.Person;
 import safayat.orm.model.Product;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by safayat on 10/16/18.
@@ -91,14 +95,15 @@ public class MysqlQuery implements MysqlQueryInterface{
 
 
         try {
-//            new CommonDAO().getSubcategorys();
             CommonDAO commonDAO = new CommonDAO();
-            Product product = commonDAO.get(Product.class, 1);
-            System.out.println(product);
-            product.setDescription("ffffffksjksjdksdjskldjklsjdklsjdklsjkdl");
-            product.setId(null);
-            System.out.println(commonDAO.insertAndRetrieveId(product));
+            String sql = MysqlQuery.get().table("person pn")
+                    .join("rel_user_person rup").on("pn.id","rup.person_id")
+                    .join("user us").on("rup.user_id","us.id").getQuery().toString();
+            System.out.println(sql);
 
+            List<Person> personList = commonDAO.getAll(Person.class, sql);
+
+            System.out.println(new Date());
 
         } catch (Exception e) {
             e.printStackTrace();
