@@ -3,6 +3,7 @@ package safayat.orm.reflect;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Table;
+import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
 
 import java.lang.annotation.Annotation;
@@ -91,13 +92,16 @@ public class ReflectUtility {
         }
     }
 
+    public static boolean isTableFieldMethod(Method method){
+        return !(
+                method.isAnnotationPresent(OneToMany.class)
+                || method.isAnnotationPresent(ManyToOne.class)
+                || method.isAnnotationPresent(Transient.class));
+    }
     public static List<Method> getParsedGetMethods(Class clazz){
         return Stream.of(clazz.getDeclaredMethods())
-                .filter(m -> m.getName()
-                        .startsWith("get") &&
-                        (!m.isAnnotationPresent(OneToMany.class) && !m.isAnnotationPresent(ManyToOne.class)))
-                            .collect(Collectors.toList());
-
+                .filter(m -> m.getName().startsWith("get") && isTableFieldMethod(m))
+                    .collect(Collectors.toList());
     }
 
     public static String createInsertSqlString(Object o){
@@ -105,16 +109,14 @@ public class ReflectUtility {
         List<String> variableNames = getMethods
                 .stream()
                     .map(m -> Util.methodToVariableName(m.getName()))
-                                                            .collect(Collectors.toList());
-        StringBuilder stringBuilder = new StringBuilder("insert into ")
-                                        .append(ConfigManager.getInstance()
-                                                .getTableName(o.getClass()))
-                                                    .append("(")
-                                                        .append(Util.listAsString(variableNames))
-                                                            .append(") values(");
-
-
-
+                        .collect(Collectors.toList());
+        StringBuilder stringBuilder
+                = new StringBuilder("insert into ")
+                    .append(ConfigManager.getInstance()
+                            .getTableName(o.getClass()))
+                                .append("(")
+                                    .append(Util.listAsString(variableNames))
+                                        .append(") values(");
 
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);

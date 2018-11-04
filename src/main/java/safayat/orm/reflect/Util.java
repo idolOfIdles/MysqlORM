@@ -3,6 +3,8 @@ package safayat.orm.reflect;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -12,6 +14,8 @@ import java.util.List;
  */
 public class Util {
 
+    public static DateFormat mysqlDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     public static String toCamelCase(String str){
         StringBuilder stringBuilder = new StringBuilder(str);
         int  ch = str.charAt(0);
@@ -19,6 +23,11 @@ public class Util {
             stringBuilder.setCharAt(0, (char)(str.charAt(0) & 0x5f));
         }
         return stringBuilder.toString();
+
+    }
+
+    public static String classNameToTable(String str){
+        return String.valueOf(str.charAt(0)).toLowerCase() + str.substring(1);
 
     }
 
@@ -84,8 +93,18 @@ public class Util {
         }
         return stringBuilder.toString();
     }
+
     public static String toQuote(String str) {
         return "\"" + str + "\"";
+    }
+
+    public static String toString(Object ob) {
+
+        if(ob instanceof Date){
+            return mysqlDateFormat.format((Date)ob);
+        }
+
+        return ob.toString();
     }
 
 }

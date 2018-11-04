@@ -3,6 +3,7 @@ package safayat.queryBuilder;
 import safayat.orm.dao.CommonDAO;
 import safayat.orm.model.Person;
 import safayat.orm.model.Product;
+import safayat.orm.model.User;
 
 import java.util.Date;
 import java.util.List;
@@ -91,6 +92,7 @@ public class MysqlQuery implements MysqlQueryInterface{
 
 
 
+
     public static void main(String[] args){
 
 
@@ -101,13 +103,13 @@ public class MysqlQuery implements MysqlQueryInterface{
                     .join("user us").on("rup.user_id","us.id").getQuery().toString();
             System.out.println(sql);
 
-            List<Person> personList = commonDAO.getAll(Person.class, sql);
-
-            System.out.println(new Date());
+//            List<Person> persons = commonDAO.getAll(Person.class, sql);
+            List<User> users = commonDAO.getAll(User.class, sql);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
 
     }
 

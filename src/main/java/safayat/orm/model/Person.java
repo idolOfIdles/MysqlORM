@@ -7,10 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Table(name = "person"
-        , primaryKey = "id"
-        , primaryKeyColumn = "id"
-        , databaseName = "alhelal")
 public class Person {
   private Integer id;
   private Date creationDate;
@@ -78,5 +74,16 @@ public class Person {
         this.users = users;
     }
 
-
+  @Override
+  public String toString() {
+    return "Person{" +
+            "id=" + id +
+            ", creationDate=" + creationDate +
+            ", updateDate=" + updateDate +
+            ", age=" + age +
+            ", firstName='" + firstName + '\'' +
+            ", lastName='" + lastName + '\'' +
+            ", name='" + name + '\'' +
+            '}';
+  }
 }

@@ -7,10 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Table(name = "user"
-        , primaryKey = "id"
-        , primaryKeyColumn = "id"
-        , databaseName = "alhelal")
 public class User {
     private Integer id;
     private Date creationDate;

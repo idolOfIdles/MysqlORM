@@ -2,6 +2,7 @@ package safayat.orm.config;
 
 import safayat.orm.annotation.Table;
 import safayat.orm.reflect.FileManager;
+import safayat.orm.reflect.Util;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -64,6 +65,8 @@ public class ConfigManager {
                 Annotation annotation = tableClazz.getAnnotation(Table.class);
                 if(annotation != null){
                     Table table = (Table)annotation;
+                    String databaseName = table.databaseName();
+                    if(databaseName.isEmpty()) databaseName = dbName;
                     Map<String, Class> classByTable =   databaseClassTableMap.get(table.databaseName());
                     if(classByTable == null){
                         classByTable = new HashMap<String, Class>();
@@ -90,7 +93,7 @@ public class ConfigManager {
         if(table!=null){
             return table.name();
         }
-        return tableClass.getSimpleName();
+        return Util.classNameToTable(tableClass.getSimpleName());
     }
 
     public Class getClassByTableName(String table, String databaseName) {
@@ -102,7 +105,7 @@ public class ConfigManager {
             try {
                 tableClass = Class.forName(ConfigManager.getInstance().getModelPackageName()
                         + "."
-                        + table);
+                        + Util.toTitle(table));
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
