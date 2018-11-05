@@ -107,4 +107,8 @@ public class Util {
         return ob.toString();
     }
 
+    public static String quotedToString(Object ob) {
+        return Util.toQuote(Util.toString(ob));
+    }
+
 }

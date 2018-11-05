@@ -4,6 +4,7 @@ import safayat.orm.dao.CommonDAO;
 import safayat.orm.model.Person;
 import safayat.orm.model.Product;
 import safayat.orm.model.User;
+import safayat.orm.model.VersionInfo;
 
 import java.util.Date;
 import java.util.List;
@@ -17,6 +18,7 @@ import java.util.List;
 interface  MysqlQueryInterface {
     MysqlQuery getQuery();
 }
+
 public class MysqlQuery implements MysqlQueryInterface{
 
     private StringBuilder query;
@@ -98,13 +100,12 @@ public class MysqlQuery implements MysqlQueryInterface{
 
         try {
             CommonDAO commonDAO = new CommonDAO();
-            String sql = MysqlQuery.get().table("person pn")
-                    .join("rel_user_person rup").on("pn.id","rup.person_id")
-                    .join("user us").on("rup.user_id","us.id").getQuery().toString();
-            System.out.println(sql);
 
+            VersionInfo versionInfo = commonDAO.get(VersionInfo.class, "abcd");
+            versionInfo.setUpdateDate(new Date());
+            commonDAO.update(versionInfo);
 //            List<Person> persons = commonDAO.getAll(Person.class, sql);
-            List<User> users = commonDAO.getAll(User.class, sql);
+//            List<User> users = commonDAO.getAll(User.class, sql);
 
         } catch (Exception e) {
             e.printStackTrace();

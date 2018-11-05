@@ -12,7 +12,6 @@ import safayat.orm.reflect.ReflectUtility;
 import java.lang.annotation.Annotation;
 import java.sql.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by safayat on 10/20/18.
@@ -101,7 +100,7 @@ public class CommonDAO {
             StringBuilder sqlBuilder = new StringBuilder("select * from ")
                     .append(ConfigManager.getInstance().getTableName(tClass))
                     .append(" where ").append(primaryKeys.get(0))
-                    .append(" = ").append(Util.toString(id));
+                    .append(" = ").append(Util.toQuote(Util.toString(id)));
 
             statement = dbConnection.prepareStatement(sqlBuilder.toString());
             ResultSet rs = statement.executeQuery();
@@ -118,40 +117,66 @@ public class CommonDAO {
 
     }
 
-    public boolean insert(Object t)throws SQLException{
-        return insertTree(t, getConnection(), new HashMap<>());
+    public void insert(Object t)throws Exception{
+        insert(t, getConnection());
     }
 
-    public boolean insert(Object t, Connection connection) throws SQLException {
-        return insertTree(t, connection, new HashMap<>());
-    }
-
-    private boolean insertTree(Object t, Connection connection, Map<String,Boolean> history) throws SQLException {
-        String sql =  ReflectUtility.createInsertSqlString(t);
-        if(history.containsKey(sql)) return true;
-        boolean ans = execute(sql, connection);
-        history.put(sql, true);
-        try {
-            Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(t.getClass());
-            for(Annotation annotation : annotationByTable.values()){
-                if(annotation instanceof ManyToOne){
-                    ManyToOne oneToMany = (ManyToOne) annotation;
-                    Object childObject = ReflectUtility.getValueFromObject(t, oneToMany.name());
-                    insert(childObject, connection);
-                }else if( annotation instanceof OneToMany){
-                    OneToMany oneToMany = (OneToMany) annotation;
-                    List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
-                    for(Object o : list){
-                        insert(o, connection);
-                    }
-                }
-
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void insert(Object t, Connection connection) throws Exception {
+        Map<String, Boolean> objectMap = new HashMap<>();
+        createInsertSqlMapByTraversingRelationTree(t, connection, objectMap);
+        for(Object insertSql : objectMap.keySet()){
+            execute(insertSql.toString(), connection);
         }
-        return ans;
+    }
+
+    private void createInsertSqlMapByTraversingRelationTree(Object t
+            , Connection connection
+            , Map<String, Boolean> nodes) throws Exception {
+        String sql = ReflectUtility.createInsertSqlString(t);
+        if(nodes.containsKey(t)) return;
+        nodes.put(sql, true);
+        Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(t.getClass());
+        for(Annotation annotation : annotationByTable.values()){
+            if(annotation instanceof ManyToOne){
+                ManyToOne oneToMany = (ManyToOne) annotation;
+                Object childObject = ReflectUtility.getValueFromObject(t, oneToMany.name());
+                createInsertSqlMapByTraversingRelationTree(childObject, connection, nodes);
+            }else if( annotation instanceof OneToMany){
+                OneToMany oneToMany = (OneToMany) annotation;
+                List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
+                for(Object o : list){
+                    createInsertSqlMapByTraversingRelationTree(o, connection, nodes);
+                }
+            }
+        }
+    }
+
+    private void createUpdateSqlMapByTraversingRelationTree(Object t
+            , Connection connection
+            , Map<Class, List<String>> primaryKeyByTable
+            , Map<String,Boolean> nodes) throws Exception {
+        List<String> primaryKeys = primaryKeyByTable.get(t.getClass());
+        if(primaryKeys == null){
+            primaryKeys = findPrimaryKeys(t, connection);
+            primaryKeyByTable.put(t.getClass(), primaryKeys);
+        }
+        String sql =  ReflectUtility.createSingleRowUpdateSqlString(t, primaryKeys);
+        if(nodes.containsKey(t)) return;
+        nodes.put(sql, true);
+        Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(t.getClass());
+        for(Annotation annotation : annotationByTable.values()){
+            if(annotation instanceof ManyToOne){
+                ManyToOne oneToMany = (ManyToOne) annotation;
+                Object childObject = ReflectUtility.getValueFromObject(t, oneToMany.name());
+                createUpdateSqlMapByTraversingRelationTree(childObject, connection, primaryKeyByTable,  nodes);
+            }else if( annotation instanceof OneToMany){
+                OneToMany oneToMany = (OneToMany) annotation;
+                List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
+                for(Object o : list){
+                    createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyByTable, nodes);
+                }
+            }
+        }
     }
 
     public Object insertAndRetrieveId(Object row) {
@@ -182,18 +207,17 @@ public class CommonDAO {
 
     }
 
-    public boolean update(Object t) {
-        return update(t,getConnection());
+    public void update(Object t) throws Exception{
+        update(t,getConnection());
     }
 
-    public boolean update(Object t, Connection connection) {
-        try {
-            String sql = ReflectUtility.createSingleRowUpdateSqlString(t);
-            return execute(sql, connection);
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void update(Object t, Connection connection) throws Exception{
+        Map<String, Boolean> objectMap = new HashMap<>();
+        createUpdateSqlMapByTraversingRelationTree(t, connection, new HashMap<>(), objectMap);
+        for(Object insertSql : objectMap.keySet()){
+            System.out.println(insertSql);
+            execute(insertSql.toString(), connection);
         }
-        return false;
     }
 
     public  <T> List<T> getAll(Class<T> tClass, MysqlQuery q) {
@@ -248,6 +272,7 @@ public class CommonDAO {
         return primaryKeys;
 
     }
+
 
     private void closeResourcesSafely(Connection dbConnection, PreparedStatement statement){
 

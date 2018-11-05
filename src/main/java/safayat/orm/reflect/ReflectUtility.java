@@ -41,7 +41,7 @@ public class ReflectUtility {
 
     }
 
-    public static <T> Object getValueFromObject(T t, String name) throws Exception{
+    public static Object getValueFromObject(Object t, String name) throws Exception{
 
         String methodName = Util.toJavaMethodName(name, "get");
         Method method = t.getClass().getDeclaredMethod(methodName);
@@ -121,7 +121,7 @@ public class ReflectUtility {
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);
             try {
-                stringBuilder.append(Util.toQuote(method.invoke(o).toString()));
+                stringBuilder.append(Util.toQuote(Util.toString(method.invoke(o))));
             } catch (Exception e) {
                 stringBuilder.append("NULL");
             }
@@ -133,40 +133,50 @@ public class ReflectUtility {
 
     }
 
-    public static String createSingleRowUpdateSqlString(Object o) throws Exception{
-        Table table = o.getClass().getAnnotation(Table.class);
+    public static String createSingleRowUpdateSqlString(Object o, List<String> primaryKeys) throws Exception{
+        if(primaryKeys.size() == 0) throw new Exception("Primary key/value not found");
         List<Method> getMethods = getParsedGetMethods(o.getClass());
         StringBuilder stringBuilder
                 = new StringBuilder("update ")
                 .append(ConfigManager.getInstance().getTableName(o.getClass()))
                 .append(" set ");
 
-        String primaryKeyValue = null;
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);
             String columnName = Util.methodToVariableName(method.getName());
             try {
-                Object value = Util.toQuote(method.invoke(o).toString());
-                if(columnName.equals(table.primaryKey())){
-                    primaryKeyValue = value.toString();
-                }else {
+                if(primaryKeys.indexOf(columnName) < 0){
                     stringBuilder
                             .append(columnName).append("=")
-                            .append(Util.toQuote(method.invoke(o).toString()));
-                    if(i<getMethods.size()-1)stringBuilder.append(",");
+                            .append(Util.toQuote(Util.toString(method.invoke(o))));
+                    stringBuilder.append(",");
                 }
             } catch (Exception e) {
             }
         }
-        if(primaryKeyValue == null) throw new Exception("Primary key/value not found");
+        if(stringBuilder.charAt(stringBuilder.length()-1) == ',')
+            stringBuilder.deleteCharAt(stringBuilder.length()-1);
         stringBuilder.append(" WHERE ")
-                .append(table.primaryKeyColumn())
-                .append("=")
-                .append(primaryKeyValue);
+                .append(createFilterByPrimaryKeySqlCondition(o, primaryKeys));
+
         return stringBuilder.toString();
 
 
     }
+
+    public static String createFilterByPrimaryKeySqlCondition(Object row, List<String> primaryKeys) throws Exception {
+        StringBuilder stringBuilder = new StringBuilder();
+        for(int i=0;i<primaryKeys.size();i++){
+            String keyName = primaryKeys.get(i);
+            Object value = ReflectUtility.getValueFromObject(row, keyName);
+            stringBuilder.append(keyName).append("=").append(Util.quotedToString(value));
+            if(i<primaryKeys.size()-1){
+                stringBuilder.append("AND");
+            }
+        }
+        return stringBuilder.toString();
+    }
+
 
 
 
