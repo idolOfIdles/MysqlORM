@@ -38,6 +38,14 @@ public class ConfigManager {
         }
         populateTableMapping();
 
+        System.out.println(databaseClassTableMap.size());
+        databaseClassTableMap.forEach((k,v)->{
+            System.out.println(k);
+            v.forEach((t,c)->{
+                System.out.println("t:" + t + " class:" + c);
+            });
+        });
+
 
     }
 
@@ -53,6 +61,12 @@ public class ConfigManager {
         modelPackageName = properties.getProperty("db.model.package");
         dbDriverName = properties.getProperty("db.driver");
         dbName = properties.getProperty("db.name");
+        System.out.println("dbUserName:" + dbUserName);
+        System.out.println("dbUrl:" + dbUrl);
+        System.out.println("dbPassword:" +dbPassword);
+        System.out.println("modelPackageName: "+modelPackageName);
+        System.out.println("dbDriverName:" + dbDriverName);
+        System.out.println("dbDriverName:" + dbName);
     }
 
     private void populateTableMapping() {
@@ -99,10 +113,14 @@ public class ConfigManager {
     public Class getClassByTableName(String table, String databaseName) {
         Class tableClass = null;
         if(databaseClassTableMap.containsKey(databaseName))
-            tableClass = databaseClassTableMap.get(databaseName).get(table);
+            tableClass = databaseClassTableMap.get(databaseName).get(table.toLowerCase());
 
         if(tableClass == null){
             try {
+
+                System.out.println(ConfigManager.getInstance().getModelPackageName()
+                        + "."
+                        + Util.toTitle(table));
                 tableClass = Class.forName(ConfigManager.getInstance().getModelPackageName()
                         + "."
                         + Util.toTitle(table));

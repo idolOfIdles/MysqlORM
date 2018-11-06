@@ -101,11 +101,11 @@ public class MysqlQuery implements MysqlQueryInterface{
         try {
             CommonDAO commonDAO = new CommonDAO();
 
-            VersionInfo versionInfo = commonDAO.get(VersionInfo.class, "abcd");
-            versionInfo.setUpdateDate(new Date());
-            commonDAO.update(versionInfo);
+//            VersionInfo versionInfo = commonDAO.get(VersionInfo.class, "abcd");
+//            versionInfo.setUpdateDate(new Date());
+//            commonDAO.update(versionInfo);
 //            List<Person> persons = commonDAO.getAll(Person.class, sql);
-//            List<User> users = commonDAO.getAll(User.class, sql);
+            List<User> users = commonDAO.getAll(User.class, "select * from User");
 
         } catch (Exception e) {
             e.printStackTrace();

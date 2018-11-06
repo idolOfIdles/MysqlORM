@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -37,7 +38,8 @@ public class FileManager {
         List<File> dirs = new ArrayList();
         while (resources.hasMoreElements()) {
             URL resource = resources.nextElement();
-            dirs.add(new File(resource.getFile()));
+            dirs.add(new File(URLDecoder.decode(resource.getFile(), "UTF-8")));
+            System.out.println(URLDecoder.decode(resource.getFile(), "UTF-8"));
         }
         ArrayList<Class> classes = new ArrayList();
         for (File directory : dirs) {
