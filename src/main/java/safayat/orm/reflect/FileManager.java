@@ -29,21 +29,23 @@ public class FileManager {
         }
     }
 
-    public static Class[] getClasses(String packageName)
+    public static Class[] getClasses(String packageNamesAsString)
             throws ClassNotFoundException, IOException {
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         assert classLoader != null;
-        String path = packageName.replace('.', '/');
-        Enumeration<URL> resources = classLoader.getResources(path);
-        List<File> dirs = new ArrayList();
-        while (resources.hasMoreElements()) {
-            URL resource = resources.nextElement();
-            dirs.add(new File(URLDecoder.decode(resource.getFile(), "UTF-8")));
-            System.out.println(URLDecoder.decode(resource.getFile(), "UTF-8"));
-        }
         ArrayList<Class> classes = new ArrayList();
-        for (File directory : dirs) {
-            classes.addAll(findClasses(directory, packageName));
+        String[] packageNames = packageNamesAsString.split(",");
+        for(String packageName : packageNames){
+            String path = packageName.replace('.', '/');
+            Enumeration<URL> resources = classLoader.getResources(path);
+            List<File> dirs = new ArrayList();
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                dirs.add(new File(URLDecoder.decode(resource.getFile(), "UTF-8")));
+            }
+            for (File directory : dirs) {
+                classes.addAll(findClasses(directory, packageName));
+            }
         }
         return classes.toArray(new Class[classes.size()]);
     }

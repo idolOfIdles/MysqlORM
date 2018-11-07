@@ -20,12 +20,16 @@ public class ReflectUtility {
     public static <P,C> void mapRelation(Annotation annotation, P parent, C child  ) throws Exception{
 
         if(annotation instanceof ManyToOne){
-            ManyToOne oneToMany = (ManyToOne) annotation;
-            Class type = oneToMany.type();
-            ReflectUtility.mapValue(parent, oneToMany.name(), type, child);
+            ManyToOne manyToOne = (ManyToOne) annotation;
+            Class type = manyToOne.type();
+            ReflectUtility.mapValue(parent, manyToOne.name(), type, child);
         }else if( annotation instanceof  OneToMany){
             OneToMany oneToMany = (OneToMany) annotation;
-            List list = (List)ReflectUtility.getValueFromObject(parent, oneToMany.name());
+            List<C> list = (List)ReflectUtility.getValueFromObject(parent, oneToMany.name());
+            if(list == null){
+                list = new ArrayList<>();
+                ReflectUtility.mapValue(parent, oneToMany.name(), List.class, list );
+            }
             list.add(child);
         }
 

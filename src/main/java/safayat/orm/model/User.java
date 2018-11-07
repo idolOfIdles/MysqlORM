@@ -22,10 +22,6 @@ public class User {
     private String username;
     private List<Person> persons;
 
-    public User() {
-        persons = new ArrayList<>();
-    }
-
     public Integer getId(){
     return id;
     }
@@ -106,5 +102,24 @@ public class User {
 
     public void setPersons(List<Person> persons) {
         this.persons = persons;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", creationDate=" + creationDate +
+                ", updateDate=" + updateDate +
+                ", dateOfBirth=" + dateOfBirth +
+                ", email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", middleName='" + middleName + '\'' +
+                ", password='" + password + '\'' +
+                ", status='" + status + '\'' +
+                ", userImageUrl='" + userImageUrl + '\'' +
+                ", username='" + username + '\'' +
+                ", persons=" + persons +
+                '}';
     }
 }

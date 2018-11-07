@@ -17,6 +17,7 @@ public class ConfigManager {
     private static ConfigManager ourInstance = new ConfigManager();
     private Map<String, Map<String, Class>> databaseClassTableMap;
     private Map<Class, Table> tableAnnotationByClass;
+    private Map<String, Class> classMap;
 
     private String dbUserName;
     private String dbPassword;
@@ -37,16 +38,6 @@ public class ConfigManager {
             e.printStackTrace();
         }
         populateTableMapping();
-
-        System.out.println(databaseClassTableMap.size());
-        databaseClassTableMap.forEach((k,v)->{
-            System.out.println(k);
-            v.forEach((t,c)->{
-                System.out.println("t:" + t + " class:" + c);
-            });
-        });
-
-
     }
 
     private void readProperties() throws IOException {
@@ -61,30 +52,27 @@ public class ConfigManager {
         modelPackageName = properties.getProperty("db.model.package");
         dbDriverName = properties.getProperty("db.driver");
         dbName = properties.getProperty("db.name");
-        System.out.println("dbUserName:" + dbUserName);
-        System.out.println("dbUrl:" + dbUrl);
-        System.out.println("dbPassword:" +dbPassword);
-        System.out.println("modelPackageName: "+modelPackageName);
-        System.out.println("dbDriverName:" + dbDriverName);
-        System.out.println("dbDriverName:" + dbName);
     }
 
     private void populateTableMapping() {
         databaseClassTableMap = new HashMap<String, Map<String, Class>>();
         tableAnnotationByClass = new HashMap<Class, Table>();
+        classMap = new HashMap<>();
         Class[] tableClasses = null;
         try {
             tableClasses = FileManager.getClasses(modelPackageName);
+
             for(Class tableClazz : tableClasses){
+                classMap.put(tableClazz.getSimpleName().toLowerCase(), tableClazz);
                 Annotation annotation = tableClazz.getAnnotation(Table.class);
                 if(annotation != null){
                     Table table = (Table)annotation;
                     String databaseName = table.databaseName();
                     if(databaseName.isEmpty()) databaseName = dbName;
-                    Map<String, Class> classByTable =   databaseClassTableMap.get(table.databaseName());
+                    Map<String, Class> classByTable =   databaseClassTableMap.get(databaseName);
                     if(classByTable == null){
                         classByTable = new HashMap<String, Class>();
-                        databaseClassTableMap.put(table.databaseName(), classByTable);
+                        databaseClassTableMap.put(databaseName, classByTable);
                     }
                     classByTable.put(table.name().toLowerCase(), tableClazz);
                     tableAnnotationByClass.put(tableClazz, table);
@@ -102,6 +90,7 @@ public class ConfigManager {
         return getClassByTableName(table, dbName);
     }
 
+
     public String getTableName(Class tableClass) {
         Table table = tableAnnotationByClass.get(tableClass);
         if(table!=null){
@@ -116,17 +105,7 @@ public class ConfigManager {
             tableClass = databaseClassTableMap.get(databaseName).get(table.toLowerCase());
 
         if(tableClass == null){
-            try {
-
-                System.out.println(ConfigManager.getInstance().getModelPackageName()
-                        + "."
-                        + Util.toTitle(table));
-                tableClass = Class.forName(ConfigManager.getInstance().getModelPackageName()
-                        + "."
-                        + Util.toTitle(table));
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
+            tableClass = classMap.get(table.toLowerCase());
         }
         return tableClass;
     }

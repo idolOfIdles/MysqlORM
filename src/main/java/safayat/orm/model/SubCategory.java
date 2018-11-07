@@ -26,9 +26,6 @@ public class SubCategory {
 
   List<Product> productList;
 
-  public SubCategory() {
-    productList = new ArrayList<Product>();
-  }
 
   @OneToMany(outer = "id"
           , inner = "subCategoryId"

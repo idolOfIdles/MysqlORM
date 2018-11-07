@@ -21,9 +21,6 @@ public class Category {
   private String status;
   private List<SubCategory> subCategories;
 
-  public Category() {
-    subCategories = new ArrayList<SubCategory>();
-  }
 
   @OneToMany(outer = "id"
           , inner = "categoryId"

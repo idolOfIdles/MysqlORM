@@ -18,9 +18,6 @@ public class Person {
 
   private List<User> users;
 
-    public Person() {
-        users = new ArrayList<>();
-    }
 
     public Integer getId(){
     return id;
