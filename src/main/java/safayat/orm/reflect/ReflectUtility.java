@@ -8,6 +8,7 @@ import safayat.orm.config.ConfigManager;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -103,24 +104,27 @@ public class ReflectUtility {
                 || method.isAnnotationPresent(Transient.class));
     }
     public static List<Method> getParsedGetMethods(Class clazz){
-        return Stream.of(clazz.getDeclaredMethods())
-                .filter(m -> m.getName().startsWith("get") && isTableFieldMethod(m))
-                    .collect(Collectors.toList());
+        List<Method> parsedGetMethods = new ArrayList<>();
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().startsWith("get") && isTableFieldMethod(method)){
+                parsedGetMethods.add(method);
+            }
+        }
+        return parsedGetMethods;
     }
 
     public static String createInsertSqlString(Object o){
         List<Method> getMethods = getParsedGetMethods(o.getClass());
-        List<String> variableNames = getMethods
-                .stream()
-                    .map(m -> Util.methodToVariableName(m.getName()))
-                        .collect(Collectors.toList());
+        List<String> variableNames = new ArrayList<>();
+        for(Method m : getMethods){
+            variableNames.add(Util.methodToVariableName(m.getName()));
+        }
         StringBuilder stringBuilder
                 = new StringBuilder("insert into ")
-                    .append(ConfigManager.getInstance()
-                            .getTableName(o.getClass()))
-                                .append("(")
-                                    .append(Util.listAsString(variableNames))
-                                        .append(") values(");
+                    .append(ConfigManager.getInstance().getTableName(o.getClass()))
+                        .append("(")
+                            .append(Util.listAsString(variableNames))
+                                .append(") values(");
 
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);

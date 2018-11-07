@@ -4,6 +4,7 @@ import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Table;
 import safayat.orm.config.ConfigManager;
+import safayat.orm.config.HikariCPDataSource;
 import safayat.orm.jdbcUtility.ResultSetUtility;
 import safayat.orm.reflect.Util;
 import safayat.queryBuilder.MysqlQuery;
@@ -16,30 +17,16 @@ import java.util.*;
 /**
  * Created by safayat on 10/20/18.
  */
-public class CommonDAO {
+public class GeneralRepository {
 
 
-    private Connection getConnection() {
+    private Connection getConnection(){
         try {
-            Class.forName(ConfigManager.getInstance().getDbDriverName());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        Connection connection = null;
-
-        try {
-            connection = DriverManager.getConnection(
-                    ConfigManager.getInstance().getDbUrl()
-                    , ConfigManager.getInstance().getDbUserName()
-                    , ConfigManager.getInstance().getDbPassword());
-
+            return HikariCPDataSource.getConnection();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        return connection;
-
+        return null;
     }
 
     private ResultSetUtility executeQuery(String sql) {
@@ -72,17 +59,33 @@ public class CommonDAO {
     private boolean execute(String sql, Connection dbConnection) throws SQLException{
         PreparedStatement statement = null;
         try {
-
-            statement = dbConnection.prepareStatement(sql);
-            return statement.execute();
+                statement = dbConnection.prepareStatement(sql);
+                return statement.execute();
 
         } catch (SQLException e) {
             throw new SQLException(e.getMessage());
         }finally {
             closeResourcesSafely(null, statement);
         }
+    }
+    private int[] executeBatch(String[] sqls) throws SQLException {
+        return executeBatch(sqls, getConnection());
+    }
 
+    private int[] executeBatch(String[] sqls, Connection dbConnection) throws SQLException{
+        Statement statement = null;
+        try {
+                statement = dbConnection.createStatement();
+                for(String sql : sqls){
+                    statement.addBatch(sql);
+                }
+                return statement.executeBatch();
 
+        } catch (SQLException e) {
+            throw new SQLException(e.getMessage());
+        }finally {
+            closeResourcesSafely(null, statement);
+        }
     }
 
     public <T> T get(Class<T> tClass, Object id) {
@@ -124,9 +127,27 @@ public class CommonDAO {
     public void insert(Object t, Connection connection) throws Exception {
         Map<String, Boolean> objectMap = new HashMap<>();
         createInsertSqlMapByTraversingRelationTree(t, connection, objectMap);
-        for(Object insertSql : objectMap.keySet()){
-            execute(insertSql.toString(), connection);
+        if(objectMap.size() == 1){
+            for(Object insertSql : objectMap.keySet()){
+                execute(insertSql.toString(), connection);
+            }
+        }else {
+            executeBatch(objectMap.keySet().toArray(new String[0]), connection);
         }
+    }
+
+    public void insert(List<Object> objects)throws Exception{
+        insert(objects, getConnection());
+    }
+
+    public void insert(List<Object> objects, Connection connection) throws Exception {
+       List<String> sqls = new ArrayList<>();
+        for(Object o : objects){
+            Map<String, Boolean> objectMap = new HashMap<>();
+            createInsertSqlMapByTraversingRelationTree(o, connection, objectMap);
+            for(String sql : objectMap.keySet()) sqls.add(sql);
+        }
+        executeBatch(sqls.toArray(new String[0]), connection);
     }
 
     private void createInsertSqlMapByTraversingRelationTree(Object t
@@ -274,7 +295,7 @@ public class CommonDAO {
     }
 
 
-    private void closeResourcesSafely(Connection dbConnection, PreparedStatement statement){
+    private void closeResourcesSafely(Connection dbConnection, Statement statement){
 
         if(statement!=null){
             try {

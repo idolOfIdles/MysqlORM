@@ -1,12 +1,8 @@
 package safayat.queryBuilder;
 
-import safayat.orm.dao.CommonDAO;
-import safayat.orm.model.Person;
-import safayat.orm.model.Product;
+import safayat.orm.dao.GeneralRepository;
 import safayat.orm.model.User;
-import safayat.orm.model.VersionInfo;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -99,13 +95,13 @@ public class MysqlQuery implements MysqlQueryInterface{
 
 
         try {
-            CommonDAO commonDAO = new CommonDAO();
+            GeneralRepository generalRepository = new GeneralRepository();
 
 //            VersionInfo versionInfo = commonDAO.get(VersionInfo.class, "abcd");
 //            versionInfo.setUpdateDate(new Date());
 //            commonDAO.update(versionInfo);
 //            List<Person> persons = commonDAO.getAll(Person.class, sql);
-            List<User> users = commonDAO.getAll(User.class, "select * from user");
+            List<User> users = generalRepository.getAll(User.class, "select * from user");
             System.out.println(users);
 
         } catch (Exception e) {
