@@ -1,9 +1,6 @@
 package safayat.queryBuilder;
 
 import safayat.orm.dao.GeneralRepository;
-import safayat.orm.model.Person;
-import safayat.orm.model.User;
-import safayat.orm.model.VersionInfo;
 
 import java.util.Date;
 import java.util.List;
@@ -88,34 +85,6 @@ public class MysqlQuery implements MysqlQueryInterface{
             return new MysqlTable(this).table(splitted[0], code);
         }
         return new MysqlTable(this).table(tableName,"");
-    }
-
-
-
-
-
-    public static void main(String[] args){
-
-
-        try {
-            GeneralRepository generalRepository = new GeneralRepository();
-            List<Person> personList = generalRepository.getAll(Person.class);
-            for(Person p : personList){
-                p.setId(null);
-                p.setAge(9999);
-                p.setFirstName(p.getFirstName() + "_" +2);
-                break;
-            }
-
-            generalRepository.insert(personList);
-
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
     }
 
 }
