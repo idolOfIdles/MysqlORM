@@ -2,16 +2,12 @@ package safayat.orm.reflect;
 
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
-import safayat.orm.annotation.Table;
 import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.net.URLDecoder;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by safayat on 10/22/18.
@@ -55,6 +51,7 @@ public class ReflectUtility {
         }
         return null;
     }
+
 
     public static Map<String, Annotation> getAnnotationByTable(Class clazz) throws Exception{
         Map<String, Annotation> annotationByTable = new HashMap<String, Annotation>();
@@ -129,7 +126,7 @@ public class ReflectUtility {
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);
             try {
-                stringBuilder.append(Util.toQuote(Util.toString(method.invoke(o))));
+                stringBuilder.append(Util.toMysqlString(method.invoke(o)));
             } catch (Exception e) {
                 stringBuilder.append("NULL");
             }
@@ -156,7 +153,7 @@ public class ReflectUtility {
                 if(primaryKeys.indexOf(columnName) < 0){
                     stringBuilder
                             .append(columnName).append("=")
-                            .append(Util.toQuote(Util.toString(method.invoke(o))));
+                            .append(Util.toMysqlString(method.invoke(o)));
                     stringBuilder.append(",");
                 }
             } catch (Exception e) {
@@ -177,7 +174,7 @@ public class ReflectUtility {
         for(int i=0;i<primaryKeys.size();i++){
             String keyName = primaryKeys.get(i);
             Object value = ReflectUtility.getValueFromObject(row, keyName);
-            stringBuilder.append(keyName).append("=").append(Util.quotedToString(value));
+            stringBuilder.append(keyName).append("=").append(Util.toMysqlString(value));
             if(i<primaryKeys.size()-1){
                 stringBuilder.append("AND");
             }

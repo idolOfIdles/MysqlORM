@@ -1,8 +1,11 @@
 package safayat.queryBuilder;
 
 import safayat.orm.dao.GeneralRepository;
+import safayat.orm.model.Person;
 import safayat.orm.model.User;
+import safayat.orm.model.VersionInfo;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -96,13 +99,17 @@ public class MysqlQuery implements MysqlQueryInterface{
 
         try {
             GeneralRepository generalRepository = new GeneralRepository();
+            List<Person> personList = generalRepository.getAll(Person.class);
+            for(Person p : personList){
+                p.setId(null);
+                p.setAge(9999);
+                p.setFirstName(p.getFirstName() + "_" +2);
+                break;
+            }
 
-//            VersionInfo versionInfo = commonDAO.get(VersionInfo.class, "abcd");
-//            versionInfo.setUpdateDate(new Date());
-//            commonDAO.update(versionInfo);
-//            List<Person> persons = commonDAO.getAll(Person.class, sql);
-            List<User> users = generalRepository.getAll(User.class, "select * from user");
-            System.out.println(users);
+            generalRepository.insert(personList);
+
+
 
         } catch (Exception e) {
             e.printStackTrace();

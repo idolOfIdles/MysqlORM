@@ -7,7 +7,6 @@ import safayat.orm.config.ConfigManager;
 import safayat.orm.config.HikariCPDataSource;
 import safayat.orm.jdbcUtility.ResultSetUtility;
 import safayat.orm.reflect.Util;
-import safayat.queryBuilder.MysqlQuery;
 import safayat.orm.reflect.ReflectUtility;
 
 import java.lang.annotation.Annotation;
@@ -103,7 +102,7 @@ public class GeneralRepository {
             StringBuilder sqlBuilder = new StringBuilder("select * from ")
                     .append(ConfigManager.getInstance().getTableName(tClass))
                     .append(" where ").append(primaryKeys.get(0))
-                    .append(" = ").append(Util.toQuote(Util.toString(id)));
+                    .append(" = ").append(Util.toMysqlString(id));
 
             statement = dbConnection.prepareStatement(sqlBuilder.toString());
             ResultSet rs = statement.executeQuery();
@@ -120,11 +119,15 @@ public class GeneralRepository {
 
     }
 
-    public void insert(Object t)throws Exception{
+    public <T> T mapSingleObject(Class<T> tClass, ResultSet resultSet) throws Exception{
+       return new ResultSetUtility(resultSet).mapRow(tClass);
+    }
+
+    public <T> void insert(T t)throws Exception{
         insert(t, getConnection());
     }
 
-    public void insert(Object t, Connection connection) throws Exception {
+    public <T> void insert(T t, Connection connection) throws Exception {
         Map<String, Boolean> objectMap = new HashMap<>();
         createInsertSqlMapByTraversingRelationTree(t, connection, objectMap);
         if(objectMap.size() == 1){
@@ -136,18 +139,18 @@ public class GeneralRepository {
         }
     }
 
-    public void insert(List<Object> objects)throws Exception{
-        insert(objects, getConnection());
+    public <T> int[] insert(List<T> objects)throws Exception{
+        return insert(objects, getConnection());
     }
 
-    public void insert(List<Object> objects, Connection connection) throws Exception {
+    public <T> int[] insert(List<T> objects, Connection connection) throws Exception {
        List<String> sqls = new ArrayList<>();
         for(Object o : objects){
             Map<String, Boolean> objectMap = new HashMap<>();
             createInsertSqlMapByTraversingRelationTree(o, connection, objectMap);
             for(String sql : objectMap.keySet()) sqls.add(sql);
         }
-        executeBatch(sqls.toArray(new String[0]), connection);
+        return executeBatch(sqls.toArray(new String[0]), connection);
     }
 
     private void createInsertSqlMapByTraversingRelationTree(Object t
@@ -165,8 +168,10 @@ public class GeneralRepository {
             }else if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
                 List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
-                for(Object o : list){
-                    createInsertSqlMapByTraversingRelationTree(o, connection, nodes);
+                if(list != null){
+                    for(Object o : list){
+                        createInsertSqlMapByTraversingRelationTree(o, connection, nodes);
+                    }
                 }
             }
         }
@@ -193,8 +198,10 @@ public class GeneralRepository {
             }else if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
                 List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
-                for(Object o : list){
-                    createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyByTable, nodes);
+                if(list != null){
+                    for(Object o : list){
+                        createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyByTable, nodes);
+                    }
                 }
             }
         }
@@ -235,22 +242,53 @@ public class GeneralRepository {
     public void update(Object t, Connection connection) throws Exception{
         Map<String, Boolean> objectMap = new HashMap<>();
         createUpdateSqlMapByTraversingRelationTree(t, connection, new HashMap<>(), objectMap);
-        for(Object insertSql : objectMap.keySet()){
-            System.out.println(insertSql);
-            execute(insertSql.toString(), connection);
+        if(objectMap.size() == 1){
+            for(Object insertSql : objectMap.keySet()){
+                execute(insertSql.toString(), connection);
+            }
+        }else {
+            executeBatch(objectMap.keySet().toArray(new String[0]), connection);
         }
+
     }
 
-    public  <T> List<T> getAll(Class<T> tClass, MysqlQuery q) {
-        return getAll(tClass, q.toString());
+    public <T> int[] update(List<T> objects)throws Exception{
+        return update(objects, getConnection());
+    }
+
+    public <T> int[] update(List<T> objects, Connection connection) throws Exception {
+        List<String> sqls = new ArrayList<>();
+        Map<Class, List<String>> primaryKeyMap = new HashMap<>();
+        for(Object o : objects){
+            Map<String, Boolean> objectMap = new HashMap<>();
+            createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyMap, objectMap);
+            for(String sql : objectMap.keySet()) sqls.add(sql);
+        }
+        return executeBatch(sqls.toArray(new String[0]), connection);
     }
 
     public <T> List<T> getAll(Class<T> tClass, String sql) {
+
         ResultSetUtility resultSetUtility = executeQuery(sql);
         try {
             if(resultSetUtility!=null){
-               return resultSetUtility.mapResultsetToClass(tClass);
+                List<T> result=  resultSetUtility.mapResultsetToObjects(tClass);
+                resultSetUtility.close();
+                return result;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+    public <T> List<T> getAll(Class<T> tClass) {
+        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass));
+    }
+
+    public <T> List<T> mapResultSetToObjects(Class<T> tClass, ResultSet resultSet) {
+        try {
+            return new ResultSetUtility(resultSet).mapResultsetToObjects(tClass);
         } catch (Exception e) {
             e.printStackTrace();
         }

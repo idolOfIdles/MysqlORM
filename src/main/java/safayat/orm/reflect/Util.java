@@ -98,17 +98,20 @@ public class Util {
         return "\"" + str + "\"";
     }
 
-    public static String toString(Object ob) {
+    public static String toMysqlString(Object ob) {
 
         if(ob instanceof Date){
-            return mysqlDateFormat.format((Date)ob);
+            return toQuote(mysqlDateFormat.format((Date)ob));
         }
 
-        return ob.toString();
+        if(ob == null){
+            return "NULL";
+        }
+
+        return toQuote(ob.toString());
     }
 
-    public static String quotedToString(Object ob) {
-        return Util.toQuote(Util.toString(ob));
-    }
+
+
 
 }
