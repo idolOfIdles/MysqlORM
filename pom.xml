@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.idolofidles</groupId>
     <artifactId>MysqlORM</artifactId>
-    <version>1.0</version>
+    <version>1.0.0</version>
     <packaging>jar</packaging>
     <name>MysqlORM</name>
     <description>Blueprint project for Java libraries to be published on Maven Central</description>
@@ -25,8 +25,8 @@
     </licenses>
     <scm>
         <url>https://github.com/idolOfIdles/MysqlORM</url>
-        <connection>scm:git:git@github.com:idolOfIdles/MysqlORM.git</connection>
-        <developerConnection>scm:git:git@github.com:idolOfIdles/MysqlORM.git</developerConnection>
+        <connection>scm:git:git://github.com/idolOfIdles/MysqlORM.git</connection>
+        <developerConnection>scm:git:ssh://github.com:idolOfIdles/MysqlORM.git</developerConnection>
     </scm>
     <dependencies>
         <dependency>
@@ -55,6 +55,10 @@
         <profile>
             <id>release</id>
             <distributionManagement>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
                 <repository>
                     <id>ossrh</id>
                     <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
@@ -65,7 +69,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>2.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -78,7 +82,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>2.9.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -101,6 +105,18 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.7</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
                     </plugin>
 
                 </plugins>
