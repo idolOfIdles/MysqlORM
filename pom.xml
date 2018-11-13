@@ -25,8 +25,8 @@
     </licenses>
     <scm>
         <url>https://github.com/idolOfIdles/MysqlORM</url>
-        <connection>https://github.com/idolOfIdles/MysqlORM.git</connection>
-        <developerConnection>https://github.com/idolOfIdles/MysqlORM.git</developerConnection>
+        <connection>scm:git:git@github.com:idolOfIdles/MysqlORM.git</connection>
+        <developerConnection>scm:git:git@github.com:idolOfIdles/MysqlORM.git</developerConnection>
     </scm>
     <dependencies>
         <dependency>
