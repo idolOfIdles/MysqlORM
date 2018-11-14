@@ -8,6 +8,7 @@ import safayat.orm.config.HikariCPDataSource;
 import safayat.orm.jdbcUtility.ResultSetUtility;
 import safayat.orm.reflect.Util;
 import safayat.orm.reflect.ReflectUtility;
+import safayat.queryBuilder.MysqlQuery;
 
 import java.lang.annotation.Annotation;
 import java.sql.*;
@@ -284,6 +285,13 @@ public class GeneralRepository {
     }
     public <T> List<T> getAll(Class<T> tClass) {
         return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass));
+    }
+
+    public <T> List<T> getAll(Class<T> tClass, int limit) {
+        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass) + " limit " + limit);    }
+
+    public <T> List<T> getAll(Class<T> tClass, int limit, int offset) {
+        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass) + " limit " + limit + " offset " + offset);
     }
 
     public <T> List<T> mapResultSetToObjects(Class<T> tClass, ResultSet resultSet) {
