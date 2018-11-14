@@ -11,11 +11,14 @@ import java.util.List;
 public class MainTest {
 
     public static void main(String[] args){
-        GeneralRepository generalRepository = new GeneralRepository();
-        List<Person> personList = generalRepository.getAll(Person.class, 2, 0);
-        for(Person person : personList){
-            System.out.println(person);
-        }
+//        GeneralRepository generalRepository = new GeneralRepository();
+//        List<Person> personList = generalRepository.getAll(Person.class, 2, 0);
+//        for(Person person : personList){
+//            System.out.println(person);
+//        }
+
+        PersonDAO personDAO = new PersonDAO();
+        List<Person> personList = personDAO.getAll(Person.class);
 
     }
 
