@@ -50,6 +50,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ### Tutorial
   ##Query Example
+  
   Make your DAO or repository class Extend the GeneralRepository provided by MysqlORM.
  
 ```
