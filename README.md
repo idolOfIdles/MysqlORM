@@ -9,7 +9,7 @@ MysqlORM
 <dependency>
   <groupId>io.github.idolofidles</groupId>
   <artifactId>MysqlORM</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
 </dependency>
 ```
 
