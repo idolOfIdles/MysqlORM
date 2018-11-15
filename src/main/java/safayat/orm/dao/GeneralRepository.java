@@ -4,7 +4,6 @@ import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Table;
 import safayat.orm.config.ConfigManager;
-import safayat.orm.config.HikariCPDataSource;
 import safayat.orm.jdbcUtility.ResultSetUtility;
 import safayat.orm.reflect.Util;
 import safayat.orm.reflect.ReflectUtility;
@@ -20,13 +19,8 @@ import java.util.*;
 public class GeneralRepository {
 
 
-    private Connection getConnection(){
-        try {
-            return HikariCPDataSource.getConnection();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
+    private Connection getConnection() throws SQLException {
+        return ConfigManager.getInstance().getConnection();
     }
 
     private ResultSetUtility executeQuery(String sql) {
@@ -208,7 +202,7 @@ public class GeneralRepository {
         }
     }
 
-    public Object insertAndRetrieveId(Object row) {
+    public Object insertAndRetrieveId(Object row) throws SQLException {
         return insertAndRetrieveId(row, getConnection());
     }
     public Object insertAndRetrieveId(Object row, Connection dbConnection) {
