@@ -236,7 +236,7 @@ public class GeneralRepository {
 
     public void update(Object t, Connection connection) throws Exception{
         Map<String, Boolean> objectMap = new HashMap<>();
-        createUpdateSqlMapByTraversingRelationTree(t, connection, new HashMap<>(), objectMap);
+        createUpdateSqlMapByTraversingRelationTree(t, connection, new HashMap<Class, List<String>>(), objectMap);
         if(objectMap.size() == 1){
             for(Object insertSql : objectMap.keySet()){
                 execute(insertSql.toString(), connection);
