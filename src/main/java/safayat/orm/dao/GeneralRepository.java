@@ -7,7 +7,6 @@ import safayat.orm.config.ConfigManager;
 import safayat.orm.jdbcUtility.ResultSetUtility;
 import safayat.orm.reflect.Util;
 import safayat.orm.reflect.ReflectUtility;
-import safayat.queryBuilder.MysqlQuery;
 
 import java.lang.annotation.Annotation;
 import java.sql.*;
