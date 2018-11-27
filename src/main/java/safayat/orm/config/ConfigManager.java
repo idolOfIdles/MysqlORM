@@ -3,6 +3,7 @@ package safayat.orm.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import safayat.orm.annotation.Table;
+import safayat.orm.interfaces.ConnectionPoolInterface;
 import safayat.orm.reflect.FileManager;
 import safayat.orm.reflect.Util;
 
@@ -23,34 +24,28 @@ public class ConfigManager {
     private Map<String, Map<String, Class>> databaseClassTableMap;
     private Map<Class, Table> tableAnnotationByClass;
     private Map<String, Class> classMap;
-    private HikariConfig config;
-    private HikariDataSource ds;
     private String dbUserName;
     private String dbPassword;
     private String dbName;
     private String dbUrl;
     private String dbDriverName;
     private String modelPackageName;
-    private Boolean useHikariCP;
-
+    ConnectionPoolInterface connectionPool;
 
     public static ConfigManager getInstance() {
         return ourInstance;
     }
 
+    public void setConnectionPool(ConnectionPoolInterface connectionPoolInterface) {
+        if(connectionPool == null){
+            this.connectionPool = connectionPoolInterface;
+        }
+    }
+
     private ConfigManager(){
+
         try {
             readProperties();
-            if(useHikariCP){
-                config = new HikariConfig();
-                config.setJdbcUrl(dbUrl);
-                config.setUsername(dbUserName);
-                config.setPassword(dbPassword);
-                config.addDataSourceProperty("cachePrepStmts", "true");
-                config.addDataSourceProperty("prepStmtCacheSize", "250");
-                config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-                ds = new HikariDataSource(config);
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -69,8 +64,6 @@ public class ConfigManager {
         modelPackageName = properties.getProperty("db.model.package");
         dbDriverName = properties.getProperty("db.driver");
         dbName = properties.getProperty("db.name");
-        useHikariCP = properties.getProperty("db.connection.pool.hikari") != null
-                && properties.getProperty("db.connection.pool.hikari").equalsIgnoreCase("true");
     }
 
     private void populateTableMapping() {
@@ -153,9 +146,7 @@ public class ConfigManager {
         return modelPackageName;
     }
     public Connection getConnection() throws SQLException {
-        if(ds != null){
-            return ds.getConnection();
-        }
+        if(connectionPool != null) return connectionPool.getConnection();
         return DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
     }
 

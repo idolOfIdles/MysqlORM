@@ -45,11 +45,11 @@ public class GeneralRepository {
     }
 
 
-    private boolean execute(String sql) throws SQLException {
+    public boolean execute(String sql) throws SQLException {
         return execute(sql, getConnection());
     }
 
-    private boolean execute(String sql, Connection dbConnection) throws SQLException{
+    public boolean execute(String sql, Connection dbConnection) throws SQLException{
         PreparedStatement statement = null;
         try {
                 statement = dbConnection.prepareStatement(sql);
