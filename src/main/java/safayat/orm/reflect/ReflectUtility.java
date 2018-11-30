@@ -72,7 +72,8 @@ public class ReflectUtility {
 
     }
 
-    public static void populateDescentAnnotations(Class clazz, Map<String, Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
+    public static void populateDescentAnnotations(Class clazz, Map<String
+            , Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
         visited.put(clazz.getSimpleName().toLowerCase(), clazz);
         List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
         for(Annotation annotation : annotationList){

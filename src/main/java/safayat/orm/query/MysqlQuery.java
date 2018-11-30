@@ -1,6 +1,9 @@
 package safayat.orm.query;
 
+import safayat.orm.config.ConfigManager;
 import safayat.orm.dao.GeneralRepositoryManager;
+import safayat.orm.query.util.Util;
+import safayat.orm.reflect.ReflectUtility;
 
 import java.util.List;
 
@@ -26,6 +29,10 @@ public class MysqlQuery{
         return new MysqlQuery(fields);
     }
 
+    public static MysqlQuery All(){
+        return new MysqlQuery("*");
+    }
+
     public static <I> I load(Class<I> clazz, Object primaryOrUniqueKey){
         return GeneralRepositoryManager.getInstance().getGeneralRepository().get(clazz, primaryOrUniqueKey);
     }
@@ -38,6 +45,7 @@ public class MysqlQuery{
         return GeneralRepositoryManager.getInstance().getGeneralRepository().getAll(clazz, limit, offset);
     }
 
+/*
     public MysqlQuery sum(String field){
         appendAggregateFunction(field, "sum");
         return this;
@@ -66,6 +74,7 @@ public class MysqlQuery{
 
 
 
+*/
     public String toString() {
         return query.toString();
     }
@@ -89,6 +98,14 @@ public class MysqlQuery{
             return new MysqlTable(this).table(splitted[0], code);
         }
         return new MysqlTable(this).table(tableName,"");
+    }
+
+    public MysqlTable table(Class tableClass, String alias){
+        return table(ConfigManager.getInstance().getTableName(tableClass), alias);
+    }
+
+    public MysqlTable table(Class tableClass){
+        return table(ConfigManager.getInstance().getTableName(tableClass));
     }
 
 

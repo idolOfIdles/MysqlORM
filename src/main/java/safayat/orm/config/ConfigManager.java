@@ -1,7 +1,5 @@
 package safayat.orm.config;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import safayat.orm.annotation.Table;
 import safayat.orm.interfaces.ConnectionPoolInterface;
 import safayat.orm.reflect.FileManager;
