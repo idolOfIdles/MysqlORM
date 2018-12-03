@@ -14,40 +14,57 @@ public class MysqlTable extends QueryDataConverter{
     private MysqlOrder mysqlOrder;
     private safayat.orm.query.MysqlGroupBy mysqlGroupBy;
 
-    public MysqlTable(MysqlQuery mysqlQuery){
-        super(mysqlQuery);
+    public static String JOIN = "join";
+    public static String LEFT_JOIN = "left join";
+    public static String RIGHT_JOIN = "right join";
+
+    public MysqlTable(StringBuilder  query){
+        super(query);
         mysqlJoin = new MysqlJoin(this);
-//        mysqlCondition = new MysqlCondition(mysqlQuery);
+//        mysqlCondition = new MysqlCondition(query);
     }
     public MysqlTable table(String tableName, String code){
-        if(tableSelectedOnce) mysqlQuery.append(",");
+        if(tableSelectedOnce) query.append(",");
         tableSelectedOnce = true;
-        mysqlQuery.append(tableName).append(" ").append(code);
+        query.append(tableName).append(" ").append(code);
         return this;
     }
 
     public MysqlTable table(String tableName){
-        String[] splitted = tableName.trim().split(" ");
-        String code = "";
-        if(splitted.length > 1){
-            tableName = splitted[0];
-            code = splitted[1];
-        }
-        if(tableSelectedOnce) mysqlQuery.append(",");
+        if(tableSelectedOnce) query.append(",");
         tableSelectedOnce = true;
-        mysqlQuery.append(tableName).append(" ").append(code);
-
+        createANdAppendJoinSqlString(tableName,"");
         return this;
 
     }
 
+    private void createANdAppendJoinSqlString(String tableName, String joinName){
+        String[] splitted = tableName.split(" ");
+        tableName = splitted[0];
+        String code = splitted.length > 1 ? splitted[1] : "";
+        query
+                .append(" ").append(joinName).append(" ")
+                .append(tableName)
+                .append(" ")
+                .append(code);
+    }
+
+    private void createANdAppendJoinSqlString(String tableName,String code,  String joinName){
+        query
+                .append(" ").append(joinName).append(" ")
+                .append(tableName)
+                .append(" ")
+                .append(code);
+
+    }
+
     public MysqlJoin join(String tableName, String code){
-        mysqlQuery.append(" join ").append(tableName).append(" ").append(code);
+        query.append(" join ").append(tableName).append(" ").append(code);
 
         return mysqlJoin;
     }
     public MysqlJoin leftJoin(String tableName, String code){
-        mysqlQuery.append(" left join ").append(tableName).append(" ").append(code);
+        query.append(" left join ").append(tableName).append(" ").append(code);
 
         return mysqlJoin;
     }
@@ -57,7 +74,7 @@ public class MysqlTable extends QueryDataConverter{
         tableName = splitted[0];
         String code = splitted.length > 1 ? splitted[1] : "";
 
-        mysqlQuery.append(" right join ").append(tableName).append(" ").append(code);
+        query.append(" right join ").append(tableName).append(" ").append(code);
         return mysqlJoin;
     }
 
@@ -65,72 +82,71 @@ public class MysqlTable extends QueryDataConverter{
         String[] splitted = tableName.split(" ");
         tableName = splitted[0];
         String code = splitted.length > 1 ? splitted[1] : "";
-        mysqlQuery.append(" join ").append(tableName).append(" ").append(code);
+        query.append(" join ").append(tableName).append(" ").append(code);
         return mysqlJoin;
     }
     public MysqlJoin leftJoin(String tableName){
         String[] splitted = tableName.split(" ");
         tableName = splitted[0];
         String code = splitted.length > 1 ? splitted[1] : "";
-        mysqlQuery.append(" left join ").append(tableName).append(" ").append(code);
+        query.append(" left join ").append(tableName).append(" ").append(code);
         return mysqlJoin;
     }
 
     public MysqlJoin rightJoin(String tableName, String code){
-        mysqlQuery.append(" right join ").append(tableName).append(" ").append(code);
+        query.append(" right join ").append(tableName).append(" ").append(code);
 
         return mysqlJoin;
     }
 
     public MysqlCondition filter(String expression, Object value){
-        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(mysqlQuery);
+        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
         return mysqlCondition.filter(expression, value);
     }
 
     public MysqlCondition orFilter(String expression, Object value){
-        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(mysqlQuery);
+        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
         return mysqlCondition.orFilter(expression, value);
 
     }
 
     public MysqlCondition filter(String expression){
-        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(mysqlQuery);
+        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
         return mysqlCondition.filter(expression);
     }
 
     public MysqlCondition orFilter(String expression){
-        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(mysqlQuery);
+        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
         return mysqlCondition.orFilter(expression);
 
     }
     public MysqlCondition orIn(String field, List<Object> values){
-        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(mysqlQuery);
+        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
         return mysqlCondition.orIn(field, values);
 
     }
     public MysqlCondition in(String field, List<Object> values){
-        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(mysqlQuery);
+        if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
         return mysqlCondition.in(field, values);
 
     }
 
     public  MysqlOrder order(String orderKey, String sort){
-        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(mysqlQuery);
+        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(query);
         mysqlOrder.order(orderKey,sort);
         return mysqlOrder;
     }
 
-    public String limit(int limit){
-        return limit(limit, 0);
+    public QueryDataConverter limit(int limit){
+        return new Limit(query).limit(limit);
     }
 
-    public String limit(int limit, int offset){
-        mysqlQuery.append(" limit ").append(limit).append(" offset ").append(offset);
-        return mysqlQuery.toString();
+    public QueryDataConverter limit(int limit, int offset){
+        return new Limit(query).limit(limit, offset);
     }
 
     public MysqlGroupBy groupBy(String groupByKey){
-        if(mysqlGroupBy == null) mysqlGroupBy = new MysqlGroupBy(mysqlQuery);
+        if(mysqlGroupBy == null) mysqlGroupBy = new MysqlGroupBy(query);
         return mysqlGroupBy.groupBy(groupByKey);
     }
 

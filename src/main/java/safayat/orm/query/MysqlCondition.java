@@ -13,75 +13,74 @@ public class MysqlCondition extends QueryDataConverter{
 
     private MysqlOrder mysqlOrder;
     private MysqlGroupBy mysqlGroupBy;
-    public MysqlCondition(MysqlQuery mysqlQuery) {
+    public MysqlCondition(StringBuilder mysqlQuery) {
         super(mysqlQuery);
-        this.mysqlQuery = mysqlQuery;
+        this.query = mysqlQuery;
         mysqlQuery.append(" WHERE 1=1");
     }
 
 
     public MysqlCondition filter(String expression, Object value){
-        mysqlQuery.append(" AND ");
-        mysqlQuery.append(expression).append(Util.toMysqlString(value));
+        query.append(" AND ");
+        query.append(expression).append(Util.toMysqlString(value));
         return this;
     }
 
     public MysqlCondition orFilter(String expression, Object value){
-        mysqlQuery.append(" OR ");
-        mysqlQuery.append(expression).append(Util.toMysqlString(value));
+        query.append(" OR ");
+        query.append(expression).append(Util.toMysqlString(value));
         return this;
     }
 
     public MysqlCondition filter(String expression){
-        mysqlQuery.append(" AND ");
-        mysqlQuery.append(expression);
+        query.append(" AND ");
+        query.append(expression);
         return this;
     }
 
     public MysqlCondition orFilter(String expression){
-        mysqlQuery.append(" OR ");
-        mysqlQuery.append(expression);
+        query.append(" OR ");
+        query.append(expression);
         return this;
     }
 
     private void basicInOperation(String field, List<Object> values){
-        mysqlQuery.append(field).append(" in ").append("(");
+        query.append(field).append(" in ").append("(");
         boolean firstElement = true;
         for(Object o : values){
-            if(!firstElement) mysqlQuery.append(",");
+            if(!firstElement) query.append(",");
             firstElement = false;
-            mysqlQuery.append(Util.toMysqlString(o));
+            query.append(Util.toMysqlString(o));
         }
-        mysqlQuery.append(")");
+        query.append(")");
     }
     public MysqlCondition orIn(String field, List<Object> values){
-        mysqlQuery.append(" OR ");
+        query.append(" OR ");
         basicInOperation(field, values);
         return this;
     }
     public MysqlCondition in(String field, List<Object> values){
-        mysqlQuery.append(" AND ");
+        query.append(" AND ");
         basicInOperation(field, values);
         return this;
     }
 
 
     public  MysqlOrder order(String orderKey, String sort){
-        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(mysqlQuery);
+        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(query);
         return mysqlOrder.order(orderKey,sort);
     }
 
-    public String limit(int limit){
-        return limit(limit, 0);
+    public QueryDataConverter limit(int limit){
+        return new Limit(query).limit(limit);
     }
 
-    public String limit(int limit, int offset){
-        mysqlQuery.append(" limit ").append(limit).append(" offset ").append(offset);
-        return mysqlQuery.toString();
+    public QueryDataConverter limit(int limit, int offset){
+        return new Limit(query).limit(limit, offset);
     }
 
     public MysqlGroupBy groupBy(String groupByKey){
-        if(mysqlGroupBy == null) mysqlGroupBy = new MysqlGroupBy(mysqlQuery);
+        if(mysqlGroupBy == null) mysqlGroupBy = new MysqlGroupBy(query);
         return mysqlGroupBy.groupBy(groupByKey);
     }
 

@@ -45,48 +45,13 @@ public class MysqlQuery{
         return GeneralRepositoryManager.getInstance().getGeneralRepository().getAll(clazz, limit, offset);
     }
 
-/*
-    public MysqlQuery sum(String field){
-        appendAggregateFunction(field, "sum");
-        return this;
-    }
-
-    public MysqlQuery avg(String field){
-        appendAggregateFunction(field, "avg");
-        return this;
-    }
-
-    public MysqlQuery max(String field){
-        appendAggregateFunction(field, "max");
-        return this;
-    }
-
-    public MysqlQuery min(String field){
-        appendAggregateFunction(field, "min");
-        return this;
-    }
-
-    private void appendAggregateFunction(String field, String op){
-        if(queryFields.length()>0) queryFields.append(",");
-        queryFields.append(op).append("(").append(field).append(")");
-    }
-
-
-
-
-*/
     public String toString() {
         return query.toString();
     }
 
-    public MysqlQuery append(Object str) {
-        query.append(str);
-        return this;
-    }
-
     public MysqlTable table(String tableName, String alias){
         query.append("select " + queryFields.toString() + " from ");
-        return new MysqlTable(this).table(tableName, alias);
+        return new MysqlTable(query).table(tableName, alias);
     }
 
     public MysqlTable table(String tableName){
@@ -95,9 +60,9 @@ public class MysqlQuery{
         String code = "";
         if(splitted.length > 1){
             code = splitted[1];
-            return new MysqlTable(this).table(splitted[0], code);
+            return new MysqlTable(query).table(splitted[0], code);
         }
-        return new MysqlTable(this).table(tableName,"");
+        return new MysqlTable(query).table(tableName,"");
     }
 
     public MysqlTable table(Class tableClass, String alias){

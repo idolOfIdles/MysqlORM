@@ -10,7 +10,7 @@ public class MysqlJoin {
         this.mysqlTable = mysqlTable;
     }
     public MysqlTable on(String col1,String col2){
-        mysqlTable.mysqlQuery.append(" on ").append(col1).append("=").append(col2);
+        mysqlTable.query.append(" on ").append(col1).append("=").append(col2);
         return mysqlTable;
     }
 }

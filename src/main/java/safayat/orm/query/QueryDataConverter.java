@@ -10,24 +10,24 @@ import java.util.List;
 
 public abstract class QueryDataConverter {
 
-    MysqlQuery mysqlQuery;
+    StringBuilder query;
 
-    protected QueryDataConverter(MysqlQuery mysqlQuery) {
-        this.mysqlQuery = mysqlQuery;
+    protected QueryDataConverter(StringBuilder mysqlQuery) {
+        this.query = mysqlQuery;
     }
 
     public <I> List<I> toList(Class<I> clazz){
         return GeneralRepositoryManager
                 .getInstance()
                 .getGeneralRepository()
-                .getAll(clazz, mysqlQuery.toString());
+                .getAll(clazz, query.toString());
     }
 
     public <I> I first(Class<I> clazz){
          List<I> data = GeneralRepositoryManager
                 .getInstance()
                 .getGeneralRepository()
-                .getAll(clazz, mysqlQuery.toString());
+                .getAll(clazz, query.toString());
 
         if(data.size() == 0) return null;
         return data.get(0);

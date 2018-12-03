@@ -6,30 +6,28 @@ package safayat.orm.query;
 
 public class MysqlGroupBy {
 
-    private MysqlQuery mysqlQuery;
+    private StringBuilder query;
     private MysqlOrder mysqlOrder;
 
-    public MysqlGroupBy(MysqlQuery mysqlQuery) {
-        this.mysqlQuery = mysqlQuery;
+    public MysqlGroupBy(StringBuilder mysqlQuery) {
+        this.query = mysqlQuery;
     }
 
     public MysqlGroupBy groupBy(String groupByKey){
-        mysqlQuery.append(" group by ").append(groupByKey);
+        query.append(" group by ").append(groupByKey);
         return this;
     }
 
-    public String limit(int limit){
-        return limit(limit, 0);
+    public QueryDataConverter limit(int limit){
+        return new Limit(query).limit(limit);
     }
 
-    public String limit(int limit, int offset){
-        mysqlQuery.append(" limit ").append(limit).append(" offset ").append(offset);
-        return mysqlQuery.toString();
+    public QueryDataConverter limit(int limit, int offset){
+        return new Limit(query).limit(limit, offset);
     }
-
 
     public  MysqlOrder order(String orderKey, String sort){
-        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(mysqlQuery);
+        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(query);
         return mysqlOrder.order(orderKey, sort);
     }
 

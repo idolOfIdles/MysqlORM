@@ -7,29 +7,27 @@ package safayat.orm.query;
 public class MysqlOrder extends QueryDataConverter{
 
     boolean firstOrder = true;
-    public MysqlOrder(MysqlQuery mysqlQuery) {
+    public MysqlOrder(StringBuilder mysqlQuery) {
         super(mysqlQuery);
-        this.mysqlQuery = mysqlQuery;
+        this.query = mysqlQuery;
     }
 
     public  MysqlOrder order(String orderKey, String sort){
-        if(!firstOrder) mysqlQuery.append(", ");
-        else mysqlQuery.append(" order by ");
-        mysqlQuery.append(orderKey);
+        if(!firstOrder) query.append(", ");
+        else query.append(" order by ");
+        query.append(orderKey);
         firstOrder=false;
-        if(sort!= null && !sort.isEmpty()) mysqlQuery.append(" ").append(sort);
+        if(sort!= null && !sort.isEmpty()) query.append(" ").append(sort);
         return this;
     }
 
-    public String limit(int limit){
-        return limit(limit, 0);
+    public QueryDataConverter limit(int limit){
+        return new Limit(query).limit(limit);
     }
 
-    public String limit(int limit, int offset){
-        mysqlQuery.append(" limit ").append(limit).append(" offset ").append(offset);
-        return mysqlQuery.toString();
+    public QueryDataConverter limit(int limit, int offset){
+        return new Limit(query).limit(limit, offset);
     }
-
 
 
 
