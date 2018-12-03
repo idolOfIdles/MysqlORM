@@ -1,5 +1,7 @@
 package safayat.orm.query;
 
+import safayat.orm.config.ConfigManager;
+
 import java.util.List;
 
 /**
@@ -23,6 +25,7 @@ public class MysqlTable extends QueryDataConverter{
         mysqlJoin = new MysqlJoin(this);
 //        mysqlCondition = new MysqlCondition(query);
     }
+
     public MysqlTable table(String tableName, String code){
         if(tableSelectedOnce) query.append(",");
         tableSelectedOnce = true;
@@ -59,45 +62,61 @@ public class MysqlTable extends QueryDataConverter{
     }
 
     public MysqlJoin join(String tableName, String code){
-        query.append(" join ").append(tableName).append(" ").append(code);
-
+        createANdAppendJoinSqlString(tableName, code, MysqlTable.JOIN);
         return mysqlJoin;
     }
     public MysqlJoin leftJoin(String tableName, String code){
-        query.append(" left join ").append(tableName).append(" ").append(code);
-
-        return mysqlJoin;
-    }
-
-    public MysqlJoin rightJoin(String tableName){
-        String[] splitted = tableName.split(" ");
-        tableName = splitted[0];
-        String code = splitted.length > 1 ? splitted[1] : "";
-
-        query.append(" right join ").append(tableName).append(" ").append(code);
-        return mysqlJoin;
-    }
-
-    public MysqlJoin join(String tableName){
-        String[] splitted = tableName.split(" ");
-        tableName = splitted[0];
-        String code = splitted.length > 1 ? splitted[1] : "";
-        query.append(" join ").append(tableName).append(" ").append(code);
-        return mysqlJoin;
-    }
-    public MysqlJoin leftJoin(String tableName){
-        String[] splitted = tableName.split(" ");
-        tableName = splitted[0];
-        String code = splitted.length > 1 ? splitted[1] : "";
-        query.append(" left join ").append(tableName).append(" ").append(code);
+        createANdAppendJoinSqlString(tableName, code, MysqlTable.LEFT_JOIN);
         return mysqlJoin;
     }
 
     public MysqlJoin rightJoin(String tableName, String code){
-        query.append(" right join ").append(tableName).append(" ").append(code);
-
+        createANdAppendJoinSqlString(tableName, code, MysqlTable.RIGHT_JOIN);
         return mysqlJoin;
     }
+
+    public MysqlJoin rightJoin(String tableName){
+        createANdAppendJoinSqlString(tableName, MysqlTable.RIGHT_JOIN);
+        return mysqlJoin;
+    }
+
+    public MysqlJoin join(String tableName){
+        createANdAppendJoinSqlString(tableName, MysqlTable.JOIN);
+        return mysqlJoin;
+    }
+    public MysqlJoin leftJoin(String tableName){
+        createANdAppendJoinSqlString(tableName, MysqlTable.LEFT_JOIN);
+        return mysqlJoin;
+    }
+
+    public MysqlJoin join(Class tableName, String code){
+        createANdAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), code, MysqlTable.JOIN);
+        return mysqlJoin;
+    }
+    public MysqlJoin leftJoin(Class tableName, String code){
+        createANdAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), code, MysqlTable.LEFT_JOIN);
+        return mysqlJoin;
+    }
+
+    public MysqlJoin rightJoin(Class tableName, String code){
+        createANdAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), code, MysqlTable.RIGHT_JOIN);
+        return mysqlJoin;
+    }
+
+    public MysqlJoin rightJoin(Class tableName){
+        createANdAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.RIGHT_JOIN);
+        return mysqlJoin;
+    }
+
+    public MysqlJoin join(Class tableName){
+        createANdAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.JOIN);
+        return mysqlJoin;
+    }
+    public MysqlJoin leftJoin(Class tableName){
+        createANdAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.LEFT_JOIN);
+        return mysqlJoin;
+    }
+
 
     public MysqlCondition filter(String expression, Object value){
         if(mysqlCondition == null) mysqlCondition = new MysqlCondition(query);
