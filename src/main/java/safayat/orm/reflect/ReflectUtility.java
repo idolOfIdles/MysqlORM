@@ -119,7 +119,8 @@ public class ReflectUtility {
         }
         StringBuilder stringBuilder
                 = new StringBuilder("insert into ")
-                    .append(ConfigManager.getInstance().getTableName(o.getClass()))
+                    .append(ConfigManager.getInstance().getDbName()
+                            + "." +ConfigManager.getInstance().getTableName(o.getClass()))
                         .append("(")
                             .append(Util.listAsString(variableNames))
                                 .append(") values(");
@@ -144,7 +145,8 @@ public class ReflectUtility {
         List<Method> getMethods = getParsedGetMethods(o.getClass());
         StringBuilder stringBuilder
                 = new StringBuilder("update ")
-                .append(ConfigManager.getInstance().getTableName(o.getClass()))
+                .append(ConfigManager.getInstance().getDbName()
+                        + "." +ConfigManager.getInstance().getTableName(o.getClass()))
                 .append(" set ");
 
         for(int i=0;i<getMethods.size();i++){
