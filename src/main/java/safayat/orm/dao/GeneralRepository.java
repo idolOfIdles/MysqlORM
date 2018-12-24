@@ -61,6 +61,12 @@ public class GeneralRepository {
             closeResourcesSafely(null, statement);
         }
     }
+
+    public Object getLastInsertedId(Connection connection) throws SQLException {
+        ResultSetUtility resultSet = executeQuery("SELECT LAST_INSERT_ID()");
+        return resultSet.getResultSet().getObject(1);
+    }
+
     private int[] executeBatch(String[] sqls) throws SQLException {
         return executeBatch(sqls, getConnection());
     }
@@ -121,15 +127,17 @@ public class GeneralRepository {
         insert(t, getConnection());
     }
 
+    public <T> Object insertSingleObject(T t, Connection connection)throws Exception{
+        execute(ReflectUtility.createInsertSqlString(t), connection);
+        return GeneralRepositoryManager.getInstance().getGeneralRepository().getLastInsertedId(connection);
+    }
+
     public <T> void insert(T t, Connection connection) throws Exception {
-        Map<String, Boolean> objectMap = new HashMap<>();
-        createInsertSqlMapByTraversingRelationTree(t, connection, objectMap);
-        if(objectMap.size() == 1){
-            for(Object insertSql : objectMap.keySet()){
-                execute(insertSql.toString(), connection);
-            }
-        }else {
-            executeBatch(objectMap.keySet().toArray(new String[0]), connection);
+        Map<Object, Boolean> objectMap = new HashMap<>();
+        List<Object> independentList = new ArrayList<>();
+        createInsertSqlMapByTraversingRelationTree(t, objectMap, independentList, connection);
+        if(independentList.size() > 0) {
+            insert(independentList, connection);
         }
     }
 
@@ -140,36 +148,45 @@ public class GeneralRepository {
     public <T> int[] insert(List<T> objects, Connection connection) throws Exception {
        List<String> sqls = new ArrayList<>();
         for(Object o : objects){
-            Map<String, Boolean> objectMap = new HashMap<>();
-            createInsertSqlMapByTraversingRelationTree(o, connection, objectMap);
-            for(String sql : objectMap.keySet()) sqls.add(sql);
+            sqls.add(ReflectUtility.createInsertSqlString(o));
         }
         return executeBatch(sqls.toArray(new String[0]), connection);
     }
 
     private void createInsertSqlMapByTraversingRelationTree(Object t
-            , Connection connection
-            , Map<String, Boolean> nodes) throws Exception {
-        String sql = ReflectUtility.createInsertSqlString(t);
+            , Map<Object, Boolean> nodes
+            , List<Object> independentList
+            ,  Connection connection) throws Exception {
+
+        Object insertedId = insertSingleObject(t, connection);
         if(nodes.containsKey(t)) return;
-        nodes.put(sql, true);
+        nodes.put(t, true);
         Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(t.getClass());
         for(Annotation annotation : annotationByTable.values()){
-            if(annotation instanceof ManyToOne){
-                ManyToOne oneToMany = (ManyToOne) annotation;
-                Object childObject = ReflectUtility.getValueFromObject(t, oneToMany.name());
-                createInsertSqlMapByTraversingRelationTree(childObject, connection, nodes);
-            }else if( annotation instanceof OneToMany){
+            if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
+                if(!ReflectUtility.haveOneToManyRelationInfo(oneToMany)) continue;
                 List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
+                List<Object> dependentList = new ArrayList<>();
                 if(list != null){
                     for(Object o : list){
-                        createInsertSqlMapByTraversingRelationTree(o, connection, nodes);
+                        ReflectUtility.mapValue(o, oneToMany.matchingColumnName(),insertedId);
+                        if(ReflectUtility.haveOneToManyRelationData(o)){
+                            dependentList.add(o);
+                        }else {
+                            independentList.add(o);
+                        }
                     }
+                }
+
+                for(Object o : dependentList){
+                    createInsertSqlMapByTraversingRelationTree(o, nodes, independentList, connection);
                 }
             }
         }
     }
+
+
 
     private void createUpdateSqlMapByTraversingRelationTree(Object t
             , Connection connection

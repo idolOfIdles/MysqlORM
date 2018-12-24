@@ -6,6 +6,7 @@ import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -36,6 +37,17 @@ public class ReflectUtility {
 
         String methodName = Util.toJavaMethodName(columnName, "set");
         Method method = row.getClass().getDeclaredMethod(methodName, columnType);
+        if(method!=null){
+            method.invoke(row, value);
+        }
+
+    }
+
+    public static <T> void mapValue(T row, String columnName,Object value) throws Exception{
+
+        Field field = row.getClass().getDeclaredField(columnName);
+        String methodName = Util.toJavaMethodName(columnName, "set");
+        Method method = row.getClass().getDeclaredMethod(methodName, field.getType());
         if(method!=null){
             method.invoke(row, value);
         }
@@ -185,7 +197,22 @@ public class ReflectUtility {
         return stringBuilder.toString();
     }
 
+    public static boolean haveOneToManyRelationData(Object row) throws Exception {
+        Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(row.getClass());
+        for(Annotation annotation : annotationByTable.values()){
+            if( annotation instanceof OneToMany){
+                OneToMany oneToMany = (OneToMany) annotation;
+                List list = (List)ReflectUtility.getValueFromObject(row, oneToMany.name());
+                if(list.isEmpty() == false) return true;
+            }
+        }
+        return false;
+    }
 
+    public static boolean haveOneToManyRelationInfo(OneToMany oneToMany) throws Exception {
+       return !(oneToMany.matchingColumnName().trim().isEmpty()
+               || !oneToMany.nativeColumnName().trim().isEmpty());
 
+    }
 
 }
