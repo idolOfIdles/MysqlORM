@@ -1,12 +1,14 @@
 package safayat.orm.reflect;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 /**
@@ -65,6 +67,22 @@ public class Util {
         return list;
 
     }
+
+    public static List<Annotation> getFieldAnnotations(Class clazz) {
+
+        List<Annotation> list = new ArrayList<Annotation>();
+
+        Field[] fields = clazz.getDeclaredFields();
+        for(Field f : fields){
+            for (Annotation annotation : f.getDeclaredAnnotations()){
+                list.add(annotation);
+            }
+        }
+
+        return list;
+
+    }
+
     public static Class getClassByMysqlType(int type) {
         if(Types.BIGINT == type) return Long.class;
         if(Types.BINARY == type) return Boolean.class;
@@ -77,6 +95,31 @@ public class Util {
         if(Types.DOUBLE == type) return Double.class;
         if(Types.ARRAY == type) return Array.class;
         return String.class;
+    }
+
+    public static Class getFieldClass(Class clazz, String name) throws NoSuchFieldException {
+        return clazz.getDeclaredField(name).getType();
+    }
+
+    public static Object castToSpecificType(Class type, String value) {
+        if(type.getSimpleName().equalsIgnoreCase("int") || type.getSimpleName().equalsIgnoreCase(Integer.class.getSimpleName())){
+            return Integer.parseInt(value);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("long") || type.getSimpleName().equalsIgnoreCase(Long.class.getSimpleName())){
+            return Long.parseLong(value);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("float") || type.getSimpleName().equalsIgnoreCase(Float.class.getSimpleName())){
+            return Float.parseFloat(value);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("double") || type.getSimpleName().equalsIgnoreCase(Double.class.getSimpleName())){
+            return Double.parseDouble(value);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("byte") || type.getSimpleName().equalsIgnoreCase(Byte.class.getSimpleName())){
+            return Byte.parseByte(value);
+        }
+
+        return null;
+
     }
 
     public static String methodToVariableName(String methodName) {

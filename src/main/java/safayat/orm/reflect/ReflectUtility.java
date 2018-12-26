@@ -54,6 +54,7 @@ public class ReflectUtility {
 
     }
 
+
     public static Object getValueFromObject(Object t, String name) throws Exception{
 
         String methodName = Util.toJavaMethodName(name, "get");
@@ -67,7 +68,7 @@ public class ReflectUtility {
 
     public static Map<String, Annotation> getAnnotationByTable(Class clazz) throws Exception{
         Map<String, Annotation> annotationByTable = new HashMap<String, Annotation>();
-        List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
+        List<Annotation> annotationList = Util.getFieldAnnotations(clazz);
         for(Annotation annotation : annotationList){
             if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
@@ -84,10 +85,11 @@ public class ReflectUtility {
 
     }
 
+
     public static void populateDescentAnnotations(Class clazz, Map<String
             , Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
         visited.put(clazz.getSimpleName().toLowerCase(), clazz);
-        List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
+        List<Annotation> annotationList = Util.getFieldAnnotations(clazz);
         for(Annotation annotation : annotationList){
             Class type = null;
             if( annotation instanceof OneToMany){
@@ -113,11 +115,27 @@ public class ReflectUtility {
                 || method.isAnnotationPresent(ManyToOne.class)
                 || method.isAnnotationPresent(Transient.class));
     }
+
+    public static boolean isTableField(Field field){
+        return !(
+                field.isAnnotationPresent(OneToMany.class)
+                || field.isAnnotationPresent(ManyToOne.class)
+                || field.isAnnotationPresent(Transient.class));
+    }
+
     public static List<Method> getParsedGetMethods(Class clazz){
+
         List<Method> parsedGetMethods = new ArrayList<>();
-        for (Method method : clazz.getDeclaredMethods()){
-            if(method.getName().startsWith("get") && isTableFieldMethod(method)){
-                parsedGetMethods.add(method);
+
+        Field[] fields = clazz.getDeclaredFields();
+        for(Field f : fields){
+            if(isTableField(f)){
+                try {
+                    Method method = clazz.getDeclaredMethod(Util.toJavaMethodName(f.getName(), "get"));
+                    parsedGetMethods.add(method);
+                } catch (NoSuchMethodException e) {
+
+                }
             }
         }
         return parsedGetMethods;
@@ -211,7 +229,7 @@ public class ReflectUtility {
 
     public static boolean haveOneToManyRelationInfo(OneToMany oneToMany) throws Exception {
        return !(oneToMany.matchingColumnName().trim().isEmpty()
-               || !oneToMany.nativeColumnName().trim().isEmpty());
+               || oneToMany.nativeColumnName().trim().isEmpty());
 
     }
 

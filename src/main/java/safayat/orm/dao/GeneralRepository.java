@@ -45,27 +45,30 @@ public class GeneralRepository {
     }
 
 
-    public boolean execute(String sql) throws SQLException {
+    public Object execute(String sql) throws SQLException {
         return execute(sql, getConnection());
     }
 
-    public boolean execute(String sql, Connection dbConnection) throws SQLException{
-        PreparedStatement statement = null;
-        try {
-                statement = dbConnection.prepareStatement(sql);
-                return statement.execute();
+    public String execute(String sql, Connection dbConnection) throws SQLException{
+        Statement statement = null;
+        String executionResult = null;
 
-        } catch (SQLException e) {
-            throw new SQLException(e.getMessage());
-        }finally {
+        try {
+                statement = dbConnection.createStatement();
+                statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS);
+                ResultSet rs = statement.getGeneratedKeys();
+                while (rs.next()){
+                    executionResult = rs.getString(1);
+                }
+
+        } finally {
             closeResourcesSafely(null, statement);
         }
+
+        return executionResult;
+
     }
 
-    public Object getLastInsertedId(Connection connection) throws SQLException {
-        ResultSetUtility resultSet = executeQuery("SELECT LAST_INSERT_ID()");
-        return resultSet.getResultSet().getObject(1);
-    }
 
     private int[] executeBatch(String[] sqls) throws SQLException {
         return executeBatch(sqls, getConnection());
@@ -127,9 +130,8 @@ public class GeneralRepository {
         insert(t, getConnection());
     }
 
-    public <T> Object insertSingleObject(T t, Connection connection)throws Exception{
-        execute(ReflectUtility.createInsertSqlString(t), connection);
-        return GeneralRepositoryManager.getInstance().getGeneralRepository().getLastInsertedId(connection);
+    public <T> String insertSingleObject(T t, Connection connection)throws Exception{
+        return execute(ReflectUtility.createInsertSqlString(t), connection);
     }
 
     public <T> void insert(T t, Connection connection) throws Exception {
@@ -158,7 +160,7 @@ public class GeneralRepository {
             , List<Object> independentList
             ,  Connection connection) throws Exception {
 
-        Object insertedId = insertSingleObject(t, connection);
+        String insertedId = insertSingleObject(t, connection);
         if(nodes.containsKey(t)) return;
         nodes.put(t, true);
         Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(t.getClass());
@@ -170,7 +172,8 @@ public class GeneralRepository {
                 List<Object> dependentList = new ArrayList<>();
                 if(list != null){
                     for(Object o : list){
-                        ReflectUtility.mapValue(o, oneToMany.matchingColumnName(),insertedId);
+                        Class matchingColumnClass = Util.getFieldClass(o.getClass(), oneToMany.matchingColumnName());
+                        ReflectUtility.mapValue(o, oneToMany.matchingColumnName(), Util.castToSpecificType(matchingColumnClass, insertedId) );
                         if(ReflectUtility.haveOneToManyRelationData(o)){
                             dependentList.add(o);
                         }else {
