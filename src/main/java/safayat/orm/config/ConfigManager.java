@@ -1,11 +1,15 @@
 package safayat.orm.config;
 
 import safayat.orm.annotation.Table;
+import safayat.orm.interfaces.ConnectionPoolInterface;
 import safayat.orm.reflect.FileManager;
 import safayat.orm.reflect.Util;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -18,20 +22,26 @@ public class ConfigManager {
     private Map<String, Map<String, Class>> databaseClassTableMap;
     private Map<Class, Table> tableAnnotationByClass;
     private Map<String, Class> classMap;
-
     private String dbUserName;
     private String dbPassword;
     private String dbName;
     private String dbUrl;
     private String dbDriverName;
     private String modelPackageName;
-
+    ConnectionPoolInterface connectionPool;
 
     public static ConfigManager getInstance() {
         return ourInstance;
     }
 
+    public void setConnectionPool(ConnectionPoolInterface connectionPoolInterface) {
+        if(connectionPool == null){
+            this.connectionPool = connectionPoolInterface;
+        }
+    }
+
     private ConfigManager(){
+
         try {
             readProperties();
         } catch (IOException e) {
@@ -132,6 +142,10 @@ public class ConfigManager {
 
     public String getModelPackageName() {
         return modelPackageName;
+    }
+    public Connection getConnection() throws SQLException {
+        if(connectionPool != null) return connectionPool.getConnection();
+        return DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
     }
 
 }

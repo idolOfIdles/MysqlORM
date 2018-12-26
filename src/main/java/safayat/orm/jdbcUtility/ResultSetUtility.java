@@ -160,7 +160,7 @@ public class ResultSetUtility {
 
         return rowsMappedAsKeys;
     }
-    public <T> List<T> mapResultsetToClass(Class<T> clazz) throws Exception{
+    public <T> List<T> mapResultsetToObjects(Class<T> clazz) throws Exception{
 
         Map<String, Object>[] subRowMaps = new Map[metadata.getTableCount()];
 
@@ -202,7 +202,14 @@ public class ResultSetUtility {
         return data;
     }
 
-
-
+    public void close(){
+        if(resultSet != null){
+            try {
+                resultSet.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

@@ -16,8 +16,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD) //can use in method only.
 
 public @interface OneToMany {
-    String outer() default "";
-    String inner() default "";
+    String nativeColumnName() default "";
+    String matchingColumnName() default "";
     String name() default "";
     Class type();
 }

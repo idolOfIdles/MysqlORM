@@ -2,15 +2,13 @@ package safayat.orm.reflect;
 
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
-import safayat.orm.annotation.Table;
 import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by safayat on 10/22/18.
@@ -45,6 +43,17 @@ public class ReflectUtility {
 
     }
 
+    public static <T> void mapValue(T row, String columnName,Object value) throws Exception{
+
+        Field field = row.getClass().getDeclaredField(columnName);
+        String methodName = Util.toJavaMethodName(columnName, "set");
+        Method method = row.getClass().getDeclaredMethod(methodName, field.getType());
+        if(method!=null){
+            method.invoke(row, value);
+        }
+
+    }
+
     public static Object getValueFromObject(Object t, String name) throws Exception{
 
         String methodName = Util.toJavaMethodName(name, "get");
@@ -54,6 +63,7 @@ public class ReflectUtility {
         }
         return null;
     }
+
 
     public static Map<String, Annotation> getAnnotationByTable(Class clazz) throws Exception{
         Map<String, Annotation> annotationByTable = new HashMap<String, Annotation>();
@@ -74,7 +84,8 @@ public class ReflectUtility {
 
     }
 
-    public static void populateDescentAnnotations(Class clazz, Map<String, Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
+    public static void populateDescentAnnotations(Class clazz, Map<String
+            , Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
         visited.put(clazz.getSimpleName().toLowerCase(), clazz);
         List<Annotation> annotationList = Util.getMethodAnnotations(clazz);
         for(Annotation annotation : annotationList){
@@ -103,29 +114,33 @@ public class ReflectUtility {
                 || method.isAnnotationPresent(Transient.class));
     }
     public static List<Method> getParsedGetMethods(Class clazz){
-        return Stream.of(clazz.getDeclaredMethods())
-                .filter(m -> m.getName().startsWith("get") && isTableFieldMethod(m))
-                    .collect(Collectors.toList());
+        List<Method> parsedGetMethods = new ArrayList<>();
+        for (Method method : clazz.getDeclaredMethods()){
+            if(method.getName().startsWith("get") && isTableFieldMethod(method)){
+                parsedGetMethods.add(method);
+            }
+        }
+        return parsedGetMethods;
     }
 
     public static String createInsertSqlString(Object o){
         List<Method> getMethods = getParsedGetMethods(o.getClass());
-        List<String> variableNames = getMethods
-                .stream()
-                    .map(m -> Util.methodToVariableName(m.getName()))
-                        .collect(Collectors.toList());
+        List<String> variableNames = new ArrayList<>();
+        for(Method m : getMethods){
+            variableNames.add(Util.methodToVariableName(m.getName()));
+        }
         StringBuilder stringBuilder
                 = new StringBuilder("insert into ")
-                    .append(ConfigManager.getInstance()
-                            .getTableName(o.getClass()))
-                                .append("(")
-                                    .append(Util.listAsString(variableNames))
-                                        .append(") values(");
+                    .append(ConfigManager.getInstance().getDbName()
+                            + "." +ConfigManager.getInstance().getTableName(o.getClass()))
+                        .append("(")
+                            .append(Util.listAsString(variableNames))
+                                .append(") values(");
 
         for(int i=0;i<getMethods.size();i++){
             Method method = getMethods.get(i);
             try {
-                stringBuilder.append(Util.toQuote(Util.toString(method.invoke(o))));
+                stringBuilder.append(Util.toMysqlString(method.invoke(o)));
             } catch (Exception e) {
                 stringBuilder.append("NULL");
             }
@@ -142,7 +157,8 @@ public class ReflectUtility {
         List<Method> getMethods = getParsedGetMethods(o.getClass());
         StringBuilder stringBuilder
                 = new StringBuilder("update ")
-                .append(ConfigManager.getInstance().getTableName(o.getClass()))
+                .append(ConfigManager.getInstance().getDbName()
+                        + "." +ConfigManager.getInstance().getTableName(o.getClass()))
                 .append(" set ");
 
         for(int i=0;i<getMethods.size();i++){
@@ -152,7 +168,7 @@ public class ReflectUtility {
                 if(primaryKeys.indexOf(columnName) < 0){
                     stringBuilder
                             .append(columnName).append("=")
-                            .append(Util.toQuote(Util.toString(method.invoke(o))));
+                            .append(Util.toMysqlString(method.invoke(o)));
                     stringBuilder.append(",");
                 }
             } catch (Exception e) {
@@ -173,7 +189,7 @@ public class ReflectUtility {
         for(int i=0;i<primaryKeys.size();i++){
             String keyName = primaryKeys.get(i);
             Object value = ReflectUtility.getValueFromObject(row, keyName);
-            stringBuilder.append(keyName).append("=").append(Util.quotedToString(value));
+            stringBuilder.append(keyName).append("=").append(Util.toMysqlString(value));
             if(i<primaryKeys.size()-1){
                 stringBuilder.append("AND");
             }
@@ -181,7 +197,22 @@ public class ReflectUtility {
         return stringBuilder.toString();
     }
 
+    public static boolean haveOneToManyRelationData(Object row) throws Exception {
+        Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(row.getClass());
+        for(Annotation annotation : annotationByTable.values()){
+            if( annotation instanceof OneToMany){
+                OneToMany oneToMany = (OneToMany) annotation;
+                List list = (List)ReflectUtility.getValueFromObject(row, oneToMany.name());
+                if(list.isEmpty() == false) return true;
+            }
+        }
+        return false;
+    }
 
+    public static boolean haveOneToManyRelationInfo(OneToMany oneToMany) throws Exception {
+       return !(oneToMany.matchingColumnName().trim().isEmpty()
+               || !oneToMany.nativeColumnName().trim().isEmpty());
 
+    }
 
 }

@@ -6,7 +6,6 @@ import safayat.orm.annotation.Table;
 import safayat.orm.config.ConfigManager;
 import safayat.orm.jdbcUtility.ResultSetUtility;
 import safayat.orm.reflect.Util;
-import safayat.queryBuilder.MysqlQuery;
 import safayat.orm.reflect.ReflectUtility;
 
 import java.lang.annotation.Annotation;
@@ -16,30 +15,11 @@ import java.util.*;
 /**
  * Created by safayat on 10/20/18.
  */
-public class CommonDAO {
+public class GeneralRepository {
 
 
-    private Connection getConnection() {
-        try {
-            Class.forName(ConfigManager.getInstance().getDbDriverName());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        Connection connection = null;
-
-        try {
-            connection = DriverManager.getConnection(
-                    ConfigManager.getInstance().getDbUrl()
-                    , ConfigManager.getInstance().getDbUserName()
-                    , ConfigManager.getInstance().getDbPassword());
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return connection;
-
+    private Connection getConnection() throws SQLException {
+        return ConfigManager.getInstance().getConnection();
     }
 
     private ResultSetUtility executeQuery(String sql) {
@@ -65,24 +45,46 @@ public class CommonDAO {
     }
 
 
-    private boolean execute(String sql) throws SQLException {
+    public boolean execute(String sql) throws SQLException {
         return execute(sql, getConnection());
     }
 
-    private boolean execute(String sql, Connection dbConnection) throws SQLException{
+    public boolean execute(String sql, Connection dbConnection) throws SQLException{
         PreparedStatement statement = null;
         try {
-
-            statement = dbConnection.prepareStatement(sql);
-            return statement.execute();
+                statement = dbConnection.prepareStatement(sql);
+                return statement.execute();
 
         } catch (SQLException e) {
             throw new SQLException(e.getMessage());
         }finally {
             closeResourcesSafely(null, statement);
         }
+    }
 
+    public Object getLastInsertedId(Connection connection) throws SQLException {
+        ResultSetUtility resultSet = executeQuery("SELECT LAST_INSERT_ID()");
+        return resultSet.getResultSet().getObject(1);
+    }
 
+    private int[] executeBatch(String[] sqls) throws SQLException {
+        return executeBatch(sqls, getConnection());
+    }
+
+    private int[] executeBatch(String[] sqls, Connection dbConnection) throws SQLException{
+        Statement statement = null;
+        try {
+                statement = dbConnection.createStatement();
+                for(String sql : sqls){
+                    statement.addBatch(sql);
+                }
+                return statement.executeBatch();
+
+        } catch (SQLException e) {
+            throw new SQLException(e.getMessage());
+        }finally {
+            closeResourcesSafely(null, statement);
+        }
     }
 
     public <T> T get(Class<T> tClass, Object id) {
@@ -100,7 +102,7 @@ public class CommonDAO {
             StringBuilder sqlBuilder = new StringBuilder("select * from ")
                     .append(ConfigManager.getInstance().getTableName(tClass))
                     .append(" where ").append(primaryKeys.get(0))
-                    .append(" = ").append(Util.toQuote(Util.toString(id)));
+                    .append(" = ").append(Util.toMysqlString(id));
 
             statement = dbConnection.prepareStatement(sqlBuilder.toString());
             ResultSet rs = statement.executeQuery();
@@ -117,39 +119,74 @@ public class CommonDAO {
 
     }
 
-    public void insert(Object t)throws Exception{
+    public <T> T mapSingleObject(Class<T> tClass, ResultSet resultSet) throws Exception{
+       return new ResultSetUtility(resultSet).mapRow(tClass);
+    }
+
+    public <T> void insert(T t)throws Exception{
         insert(t, getConnection());
     }
 
-    public void insert(Object t, Connection connection) throws Exception {
-        Map<String, Boolean> objectMap = new HashMap<>();
-        createInsertSqlMapByTraversingRelationTree(t, connection, objectMap);
-        for(Object insertSql : objectMap.keySet()){
-            execute(insertSql.toString(), connection);
+    public <T> Object insertSingleObject(T t, Connection connection)throws Exception{
+        execute(ReflectUtility.createInsertSqlString(t), connection);
+        return GeneralRepositoryManager.getInstance().getGeneralRepository().getLastInsertedId(connection);
+    }
+
+    public <T> void insert(T t, Connection connection) throws Exception {
+        Map<Object, Boolean> objectMap = new HashMap<>();
+        List<Object> independentList = new ArrayList<>();
+        createInsertSqlMapByTraversingRelationTree(t, objectMap, independentList, connection);
+        if(independentList.size() > 0) {
+            insert(independentList, connection);
         }
     }
 
+    public <T> int[] insert(List<T> objects)throws Exception{
+        return insert(objects, getConnection());
+    }
+
+    public <T> int[] insert(List<T> objects, Connection connection) throws Exception {
+       List<String> sqls = new ArrayList<>();
+        for(Object o : objects){
+            sqls.add(ReflectUtility.createInsertSqlString(o));
+        }
+        return executeBatch(sqls.toArray(new String[0]), connection);
+    }
+
     private void createInsertSqlMapByTraversingRelationTree(Object t
-            , Connection connection
-            , Map<String, Boolean> nodes) throws Exception {
-        String sql = ReflectUtility.createInsertSqlString(t);
+            , Map<Object, Boolean> nodes
+            , List<Object> independentList
+            ,  Connection connection) throws Exception {
+
+        Object insertedId = insertSingleObject(t, connection);
         if(nodes.containsKey(t)) return;
-        nodes.put(sql, true);
+        nodes.put(t, true);
         Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(t.getClass());
         for(Annotation annotation : annotationByTable.values()){
-            if(annotation instanceof ManyToOne){
-                ManyToOne oneToMany = (ManyToOne) annotation;
-                Object childObject = ReflectUtility.getValueFromObject(t, oneToMany.name());
-                createInsertSqlMapByTraversingRelationTree(childObject, connection, nodes);
-            }else if( annotation instanceof OneToMany){
+            if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
+                if(!ReflectUtility.haveOneToManyRelationInfo(oneToMany)) continue;
                 List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
-                for(Object o : list){
-                    createInsertSqlMapByTraversingRelationTree(o, connection, nodes);
+                List<Object> dependentList = new ArrayList<>();
+                if(list != null){
+                    for(Object o : list){
+                        ReflectUtility.mapValue(o, oneToMany.matchingColumnName(),insertedId);
+                        if(ReflectUtility.haveOneToManyRelationData(o)){
+                            dependentList.add(o);
+                        }else {
+                            independentList.add(o);
+                        }
+                    }
+                }
+
+                for(Object o : dependentList){
+                    createInsertSqlMapByTraversingRelationTree(o, nodes, independentList, connection);
                 }
             }
         }
     }
+
+
 
     private void createUpdateSqlMapByTraversingRelationTree(Object t
             , Connection connection
@@ -172,14 +209,16 @@ public class CommonDAO {
             }else if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
                 List list = (List)ReflectUtility.getValueFromObject(t, oneToMany.name());
-                for(Object o : list){
-                    createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyByTable, nodes);
+                if(list != null){
+                    for(Object o : list){
+                        createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyByTable, nodes);
+                    }
                 }
             }
         }
     }
 
-    public Object insertAndRetrieveId(Object row) {
+    public Object insertAndRetrieveId(Object row) throws SQLException {
         return insertAndRetrieveId(row, getConnection());
     }
     public Object insertAndRetrieveId(Object row, Connection dbConnection) {
@@ -213,23 +252,61 @@ public class CommonDAO {
 
     public void update(Object t, Connection connection) throws Exception{
         Map<String, Boolean> objectMap = new HashMap<>();
-        createUpdateSqlMapByTraversingRelationTree(t, connection, new HashMap<>(), objectMap);
-        for(Object insertSql : objectMap.keySet()){
-            System.out.println(insertSql);
-            execute(insertSql.toString(), connection);
+        createUpdateSqlMapByTraversingRelationTree(t, connection, new HashMap<Class, List<String>>(), objectMap);
+        if(objectMap.size() == 1){
+            for(Object insertSql : objectMap.keySet()){
+                execute(insertSql.toString(), connection);
+            }
+        }else {
+            executeBatch(objectMap.keySet().toArray(new String[0]), connection);
         }
+
     }
 
-    public  <T> List<T> getAll(Class<T> tClass, MysqlQuery q) {
-        return getAll(tClass, q.toString());
+    public <T> int[] update(List<T> objects)throws Exception{
+        return update(objects, getConnection());
+    }
+
+    public <T> int[] update(List<T> objects, Connection connection) throws Exception {
+        List<String> sqls = new ArrayList<>();
+        Map<Class, List<String>> primaryKeyMap = new HashMap<>();
+        for(Object o : objects){
+            Map<String, Boolean> objectMap = new HashMap<>();
+            createUpdateSqlMapByTraversingRelationTree(o, connection, primaryKeyMap, objectMap);
+            for(String sql : objectMap.keySet()) sqls.add(sql);
+        }
+        return executeBatch(sqls.toArray(new String[0]), connection);
     }
 
     public <T> List<T> getAll(Class<T> tClass, String sql) {
+
         ResultSetUtility resultSetUtility = executeQuery(sql);
         try {
             if(resultSetUtility!=null){
-               return resultSetUtility.mapResultsetToClass(tClass);
+                List<T> result=  resultSetUtility.mapResultsetToObjects(tClass);
+                resultSetUtility.close();
+                return result;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+
+    }
+    public <T> List<T> getAll(Class<T> tClass) {
+        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass));
+    }
+
+    public <T> List<T> getAll(Class<T> tClass, int limit) {
+        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass) + " limit " + limit);    }
+
+    public <T> List<T> getAll(Class<T> tClass, int limit, int offset) {
+        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass) + " limit " + limit + " offset " + offset);
+    }
+
+    public <T> List<T> mapResultSetToObjects(Class<T> tClass, ResultSet resultSet) {
+        try {
+            return new ResultSetUtility(resultSet).mapResultsetToObjects(tClass);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -274,7 +351,7 @@ public class CommonDAO {
     }
 
 
-    private void closeResourcesSafely(Connection dbConnection, PreparedStatement statement){
+    private void closeResourcesSafely(Connection dbConnection, Statement statement){
 
         if(statement!=null){
             try {
@@ -291,6 +368,7 @@ public class CommonDAO {
             }
         }
     }
+
 
 
 

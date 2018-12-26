@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Created by safayat on 10/25/18.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
+@Target(ElementType.FIELD)
 public @interface Transient {
 
 }
