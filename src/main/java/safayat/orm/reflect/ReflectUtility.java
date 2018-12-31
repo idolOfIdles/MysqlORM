@@ -8,6 +8,8 @@ import safayat.orm.config.ConfigManager;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 /**
@@ -23,7 +25,7 @@ public class ReflectUtility {
             ReflectUtility.mapValue(parent, manyToOne.name(), type, child);
         }else if( annotation instanceof  OneToMany){
             OneToMany oneToMany = (OneToMany) annotation;
-            List<C> list = (List)ReflectUtility.getValueFromObject(parent, oneToMany.name());
+            List<C> list = (List)ReflectUtility.parseFieldValueFromObject(parent, oneToMany.name());
             if(list == null){
                 list = new ArrayList<>();
                 ReflectUtility.mapValue(parent, oneToMany.name(), List.class, list );
@@ -44,18 +46,12 @@ public class ReflectUtility {
     }
 
     public static <T> void mapValue(T row, String columnName,Object value) throws Exception{
-
         Field field = row.getClass().getDeclaredField(columnName);
-        String methodName = Util.toJavaMethodName(columnName, "set");
-        Method method = row.getClass().getDeclaredMethod(methodName, field.getType());
-        if(method!=null){
-            method.invoke(row, value);
-        }
-
+        mapValue(row, columnName, field.getType(), value);
     }
 
 
-    public static Object getValueFromObject(Object t, String name) throws Exception{
+    public static Object parseFieldValueFromObject(Object t, String name) throws Exception{
 
         String methodName = Util.toJavaMethodName(name, "get");
         Method method = t.getClass().getDeclaredMethod(methodName);
@@ -63,6 +59,10 @@ public class ReflectUtility {
             return method.invoke(t);
         }
         return null;
+    }
+
+    public static Class parseFieldClass(Class sourceClass, String name) throws Exception{
+        return sourceClass.getDeclaredField(name).getType();
     }
 
 
@@ -170,8 +170,12 @@ public class ReflectUtility {
 
     }
 
-    public static String createSingleRowUpdateSqlString(Object o, List<String> primaryKeys) throws Exception{
-        if(primaryKeys.size() == 0) throw new Exception("Primary key/value not found");
+    public static String createSingleRowUpdateSqlString(Object o) throws Exception{
+
+        List<String> primaryKeys = ConfigManager.getInstance()
+                                        .getPrimaryKeyInfo(o.getClass())
+                                        .getPrimaryKeysAsList();
+        if(primaryKeys == null || primaryKeys.size() == 0) throw new Exception("Primary key/value not found");
         List<Method> getMethods = getParsedGetMethods(o.getClass());
         StringBuilder stringBuilder
                 = new StringBuilder("update ")
@@ -194,6 +198,7 @@ public class ReflectUtility {
         }
         if(stringBuilder.charAt(stringBuilder.length()-1) == ',')
             stringBuilder.deleteCharAt(stringBuilder.length()-1);
+
         stringBuilder.append(" WHERE ")
                 .append(createFilterByPrimaryKeySqlCondition(o, primaryKeys));
 
@@ -202,11 +207,15 @@ public class ReflectUtility {
 
     }
 
+    public static boolean isPrimaryKeyEmpty(Object row, String primaryKey) throws Exception {
+        return ReflectUtility.parseFieldValueFromObject(row, primaryKey) == null;
+    }
+
     public static String createFilterByPrimaryKeySqlCondition(Object row, List<String> primaryKeys) throws Exception {
         StringBuilder stringBuilder = new StringBuilder();
         for(int i=0;i<primaryKeys.size();i++){
             String keyName = primaryKeys.get(i);
-            Object value = ReflectUtility.getValueFromObject(row, keyName);
+            Object value = ReflectUtility.parseFieldValueFromObject(row, keyName);
             stringBuilder.append(keyName).append("=").append(Util.toMysqlString(value));
             if(i<primaryKeys.size()-1){
                 stringBuilder.append("AND");
@@ -220,7 +229,7 @@ public class ReflectUtility {
         for(Annotation annotation : annotationByTable.values()){
             if( annotation instanceof OneToMany){
                 OneToMany oneToMany = (OneToMany) annotation;
-                List list = (List)ReflectUtility.getValueFromObject(row, oneToMany.name());
+                List list = (List)ReflectUtility.parseFieldValueFromObject(row, oneToMany.name());
                 if(list.isEmpty() == false) return true;
             }
         }
@@ -232,5 +241,38 @@ public class ReflectUtility {
                || oneToMany.nativeColumnName().trim().isEmpty());
 
     }
+
+    public static boolean haveManyToOneRelationInfo(ManyToOne manyToOne) throws Exception {
+       return !(manyToOne.matchingColumnName().trim().isEmpty()
+               || manyToOne.nativeColumnName().trim().isEmpty());
+
+    }
+
+    public static Object getColumnFromResultByGivenType(Class type, ResultSet resultSet, int index) throws SQLException {
+        if(type.getSimpleName().equalsIgnoreCase("int") || type.getSimpleName().equalsIgnoreCase(Integer.class.getSimpleName())){
+            return resultSet.getInt(index);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("long") || type.getSimpleName().equalsIgnoreCase(Long.class.getSimpleName())){
+            return resultSet.getLong(index);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("float") || type.getSimpleName().equalsIgnoreCase(Float.class.getSimpleName())){
+            return resultSet.getFloat(index);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("double") || type.getSimpleName().equalsIgnoreCase(Double.class.getSimpleName())){
+            return resultSet.getDouble(index);
+        }
+        if(type.getSimpleName().equalsIgnoreCase("byte") || type.getSimpleName().equalsIgnoreCase(Byte.class.getSimpleName())){
+            return resultSet.getByte(index);
+        }
+        if(type.getSimpleName().equalsIgnoreCase(String.class.getSimpleName())){
+            return resultSet.getString(index);
+        }
+        if(type.getSimpleName().equalsIgnoreCase(Date.class.getSimpleName())){
+            return resultSet.getDate(index);
+        }
+        return null;
+
+    }
+
 
 }

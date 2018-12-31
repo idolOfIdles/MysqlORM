@@ -11,8 +11,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD) //can use in method only.
 public @interface ManyToOne{
-    String outer() default "";
-    String inner() default "";
+    String nativeColumnName() default "";
+    String matchingColumnName() default "";
     String name() default "";
     Class type();
 }

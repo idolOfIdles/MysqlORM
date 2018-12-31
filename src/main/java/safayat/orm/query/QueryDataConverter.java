@@ -17,6 +17,7 @@ public abstract class QueryDataConverter {
     }
 
     public <I> List<I> toList(Class<I> clazz){
+        System.out.println(query.toString());
         return GeneralRepositoryManager
                 .getInstance()
                 .getGeneralRepository()

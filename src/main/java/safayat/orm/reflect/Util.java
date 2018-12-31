@@ -83,6 +83,24 @@ public class Util {
 
     }
 
+    public static List<Annotation> getFieldAnnotations(Class clazz, Class type) {
+
+        List<Annotation> list = new ArrayList<Annotation>();
+
+        Field[] fields = clazz.getDeclaredFields();
+        for(Field f : fields){
+            for (Annotation annotation : f.getDeclaredAnnotationsByType(type)){
+                list.add(annotation);
+            }
+        }
+
+        return list;
+
+    }
+
+
+
+
     public static Class getClassByMysqlType(int type) {
         if(Types.BIGINT == type) return Long.class;
         if(Types.BINARY == type) return Boolean.class;
