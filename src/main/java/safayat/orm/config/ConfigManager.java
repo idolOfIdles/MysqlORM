@@ -1,7 +1,6 @@
 package safayat.orm.config;
 
 import safayat.orm.annotation.Table;
-import safayat.orm.dao.GeneralRepository;
 import safayat.orm.interfaces.ConnectionPoolInterface;
 import safayat.orm.jdbcUtility.PrimaryKeyInfo;
 import safayat.orm.reflect.FileManager;
@@ -49,9 +48,9 @@ public class ConfigManager {
         populateTableMapping();
         try {
             primaryInfoMapForDatabases = new HashMap<>();
-            readAndPopulateDatabaseMetadata(getDbName());
+            readAndCacheDatabaseMetadata(getDbName());
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 
@@ -154,7 +153,7 @@ public class ConfigManager {
     }
 
 
-    private void readAndPopulateDatabaseMetadata(String databaseName) throws Exception {
+    private void readAndCacheDatabaseMetadata(String databaseName) throws Exception {
 
         Map<String, PrimaryKeyInfo> primaryKeyInfoByTable = new HashMap<>();
         primaryInfoMapForDatabases.put(databaseName, primaryKeyInfoByTable);
@@ -169,6 +168,7 @@ public class ConfigManager {
         resultSet.close();
 
         for(String tableName : tableNames){
+            if(getClassByTableName(tableName ,databaseName) == null) continue;
             resultSet = connection.getMetaData().getPrimaryKeys(getDbName(), null, tableName);
             PrimaryKeyInfo primaryKeyInfo = new PrimaryKeyInfo(tableName, getDbName());
             while (resultSet.next()){

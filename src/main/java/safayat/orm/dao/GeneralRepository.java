@@ -6,7 +6,6 @@ import safayat.orm.annotation.Table;
 import safayat.orm.config.ConfigManager;
 import safayat.orm.jdbcUtility.PrimaryKeyInfo;
 import safayat.orm.jdbcUtility.ResultSetUtility;
-import safayat.orm.model.Option;
 import safayat.orm.reflect.Util;
 import safayat.orm.reflect.ReflectUtility;
 
