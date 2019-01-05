@@ -16,13 +16,10 @@ import java.util.List;
 
 public class MysqlQuery{
 
-    private StringBuilder query;
-    private StringBuilder queryFields;
-
+    private QueryInfo query;
     public MysqlQuery(String fields) {
-        this.query = new StringBuilder();
-        queryFields = new StringBuilder();
-        queryFields.append(fields);
+        query = new QueryInfo();
+        query.appendFields(fields);
     }
 
     public static MysqlQuery fields(String fields){
@@ -50,12 +47,12 @@ public class MysqlQuery{
     }
 
     public MysqlTable table(String tableName, String alias){
-        query.append("select " + queryFields.toString() + " from ");
+        query.append("select " + query.getQueryFields().toString() + " from ");
         return new MysqlTable(query).table(tableName, alias);
     }
 
     public MysqlTable table(String tableName){
-        query.append("select " + queryFields.toString() + " from ");
+        query.append("select " + query.getQueryFields().toString() + " from ");
         String[] splitted = tableName.trim().split(" ");
         String code = "";
         if(splitted.length > 1){

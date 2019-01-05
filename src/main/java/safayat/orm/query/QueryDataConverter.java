@@ -1,6 +1,7 @@
 package safayat.orm.query;
 
 import safayat.orm.dao.GeneralRepositoryManager;
+import safayat.orm.query.util.Util;
 
 import java.util.List;
 
@@ -10,9 +11,13 @@ import java.util.List;
 
 public abstract class QueryDataConverter {
 
-    StringBuilder query;
+    QueryInfo query;
 
-    protected QueryDataConverter(StringBuilder mysqlQuery) {
+    public QueryInfo getQuery(){
+        return query;
+    }
+
+    protected QueryDataConverter(QueryInfo mysqlQuery) {
         this.query = mysqlQuery;
     }
 
@@ -33,6 +38,18 @@ public abstract class QueryDataConverter {
         if(data.size() == 0) return null;
         return data.get(0);
     }
+
+    void parentOrder(boolean firstOrder, String orderKey, String sort){
+        if(!firstOrder) query.append(", ");
+        else query.append(" order by ");
+        query.append(orderKey);
+        if(sort!= null && !sort.isEmpty()) query.append(" ").append(sort);
+    }
+
+
+
+
+
 
 }
 
