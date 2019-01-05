@@ -16,7 +16,17 @@ public interface OrderInterface {
 
     default MysqlOrder order(String orderKey, String sort){
         QueryDataConverter queryDataConverter = ((QueryDataConverter)this);
+        return order(queryDataConverter, orderKey, sort, true);
+    }
+
+    default MysqlOrder order(String orderKey, String sort, boolean accept){
+        QueryDataConverter queryDataConverter = ((QueryDataConverter)this);
+        return order(queryDataConverter, orderKey, sort, accept);
+    }
+
+    static MysqlOrder order(QueryDataConverter queryDataConverter, String orderKey, String sort, boolean accept){
         QueryInfo query = queryDataConverter.getQuery();
+        if(!accept) return new MysqlOrder(query);
         if(query.isOrderBegan()) query.append(", ");
         else query.append(" order by ");
         query.append(orderKey);

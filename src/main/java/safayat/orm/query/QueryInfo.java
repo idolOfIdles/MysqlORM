@@ -11,11 +11,13 @@ public class QueryInfo{
     private boolean orderBegan;
     private boolean tableBegan;
     private boolean whereBegan;
+    private boolean skip;
 
 
     public QueryInfo() {
         query = new StringBuilder();
         queryFields = new StringBuilder();
+        skip = false;
     }
 
 
@@ -70,6 +72,14 @@ public class QueryInfo{
 
     public void setWhereBegan(boolean whereBegan) {
         this.whereBegan = whereBegan;
+    }
+
+    public boolean isSkip() {
+        return skip;
+    }
+
+    public void setSkip(boolean skip) {
+        this.skip = skip;
     }
 }
 

@@ -117,9 +117,6 @@ public class MysqlTable extends QueryDataConverter implements ConditionInterface
         return mysqlJoin;
     }
 
-
-
-
 }
 
 

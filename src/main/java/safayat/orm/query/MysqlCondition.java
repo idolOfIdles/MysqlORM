@@ -22,27 +22,6 @@ public class MysqlCondition extends QueryDataConverter implements ConditionInter
             mysqlQuery.setWhereBegan(true);
         }
     }
-
-
-
-/*
-    public  MysqlOrder order(String orderKey, String sort){
-        return getOrder().order(orderKey,sort);
-    }
-
-    public QueryDataConverter limit(int limit){
-        return new Limit(query).limit(limit);
-    }
-
-    public QueryDataConverter limit(int limit, int offset){
-        return new Limit(query).limit(limit, offset);
-    }
-
-    public MysqlGroupBy groupBy(String groupByKey){
-        return getGroupBy().groupBy(groupByKey);
-    }
-*/
-
 }
 
 
