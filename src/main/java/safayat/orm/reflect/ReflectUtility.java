@@ -11,6 +11,8 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Created by safayat on 10/22/18.
@@ -170,6 +172,30 @@ public class ReflectUtility {
 
     }
 
+    public static String createOneToManyJoinSql(
+            Class parent, Class child
+            ) throws Exception{
+
+        List<Annotation> annotations = Util.getFieldAnnotations(parent, OneToMany.class);
+        annotations = annotations.stream()
+                .filter(annotation -> ((OneToMany) annotation).type().getName().equalsIgnoreCase(child.getName()))
+                .collect(Collectors.toList());
+        if(annotations.isEmpty()) throw new Exception("Relation missing");
+        OneToMany oneToMany = (OneToMany)annotations.get(0);
+        if(!ReflectUtility.haveOneToManyRelationInfo(oneToMany)) throw new Exception("Not enough relation info");
+        String parentTableName = ConfigManager.getInstance().getTableName(parent);
+        String childTableName = ConfigManager.getInstance().getTableName(oneToMany.type());
+        return new StringBuilder(" ")
+                .append(parentTableName).append(" ").append(parentTableName.toLowerCase())
+                .append(" join ")
+                .append(childTableName).append(" ").append(childTableName.toLowerCase())
+                .append(" on ")
+                .append(parentTableName.toLowerCase()).append(".").append(oneToMany.nativeColumnName())
+                .append(" = ")
+                .append(childTableName.toLowerCase()).append(".").append(oneToMany.matchingColumnName())
+                .toString();
+    }
+
     public static String createSingleRowUpdateSqlString(Object o) throws Exception{
 
         List<String> primaryKeys = ConfigManager.getInstance()
@@ -273,6 +299,14 @@ public class ReflectUtility {
         return null;
 
     }
+
+    public static String  concatTableAndAliasFromClass(Class clazz) {
+
+        String table = ConfigManager.getInstance().getTableName(clazz);
+        return table + "." + table.toLowerCase();
+
+    }
+
 
 
 }

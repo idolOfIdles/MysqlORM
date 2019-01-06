@@ -39,18 +39,6 @@ public abstract class QueryDataConverter {
         return data.get(0);
     }
 
-    void parentOrder(boolean firstOrder, String orderKey, String sort){
-        if(!firstOrder) query.append(", ");
-        else query.append(" order by ");
-        query.append(orderKey);
-        if(sort!= null && !sort.isEmpty()) query.append(" ").append(sort);
-    }
-
-
-
-
-
-
 }
 
 

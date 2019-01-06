@@ -5,6 +5,7 @@ import safayat.orm.interfaces.ConditionInterface;
 import safayat.orm.interfaces.GroupByInterface;
 import safayat.orm.interfaces.LimitInterface;
 import safayat.orm.interfaces.OrderInterface;
+import safayat.orm.reflect.ReflectUtility;
 
 /**
  * Created by safayat on 10/16/18.
@@ -13,7 +14,6 @@ import safayat.orm.interfaces.OrderInterface;
 
 public class MysqlTable extends QueryDataConverter implements ConditionInterface, OrderInterface, GroupByInterface, LimitInterface{
     private MysqlJoin mysqlJoin;
-    private boolean tableSelectedOnce = false;
 
     public static String JOIN = "join";
     public static String LEFT_JOIN = "left join";
@@ -26,15 +26,15 @@ public class MysqlTable extends QueryDataConverter implements ConditionInterface
     }
 
     public MysqlTable table(String tableName, String code){
-        if(tableSelectedOnce) query.append(",");
-        tableSelectedOnce = true;
+        if(query.isTableBegan()) query.append(",");
+        query.setTableBegan(true);
         query.append(tableName).append(" ").append(code);
         return this;
     }
 
     public MysqlTable table(String tableName){
-        if(tableSelectedOnce) query.append(",");
-        tableSelectedOnce = true;
+        if(query.isTableBegan()) query.append(",");
+        query.setTableBegan(true);
         createAndAppendJoinSqlString(tableName, "");
         return this;
 
@@ -116,6 +116,8 @@ public class MysqlTable extends QueryDataConverter implements ConditionInterface
         createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.LEFT_JOIN);
         return mysqlJoin;
     }
+
+
 
 }
 

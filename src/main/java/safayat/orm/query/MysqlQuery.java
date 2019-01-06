@@ -66,6 +66,12 @@ public class MysqlQuery{
         return table(ConfigManager.getInstance().getTableName(tableClass), alias);
     }
 
+    public MysqlTable oneToMany(Class tableClass) throws Exception{
+        query.setTableBegan(true);
+        query.append("select " + query.getQueryFields().toString() + " from ");
+        return new MysqlTable(query.append(ReflectUtility.createOneToManyJoinSql(tableClass)));
+    }
+
     public MysqlTable table(Class tableClass){
         return table(ConfigManager.getInstance().getTableName(tableClass));
     }
