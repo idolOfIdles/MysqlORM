@@ -24,7 +24,7 @@ public class GeneralRepository {
         return ConfigManager.getInstance().getConnection();
     }
 
-    private ResultSetUtility executeQuery(String sql) {
+    public ResultSetUtility executeQuery(String sql) {
         Connection dbConnection = null;
         PreparedStatement statement = null;
         try {

@@ -5,6 +5,7 @@ import safayat.orm.dao.GeneralRepositoryManager;
 import safayat.orm.query.util.Util;
 import safayat.orm.reflect.ReflectUtility;
 
+import java.sql.ResultSet;
 import java.util.List;
 
 /**
@@ -42,6 +43,14 @@ public class MysqlQuery{
         return GeneralRepositoryManager.getInstance().getGeneralRepository().getAll(clazz, limit, offset);
     }
 
+    public static ResultSet execute(String sql){
+        return GeneralRepositoryManager
+                .getInstance()
+                .getGeneralRepository()
+                .executeQuery(sql)
+                .getResultSet();
+    }
+
     public String toString() {
         return query.toString();
     }
@@ -66,10 +75,11 @@ public class MysqlQuery{
         return table(ConfigManager.getInstance().getTableName(tableClass), alias);
     }
 
-    public MysqlTable oneToMany(Class tableClass) throws Exception{
+    public MysqlCondition oneToMany(Class parent, Class child) throws Exception{
         query.setTableBegan(true);
-        query.append("select " + query.getQueryFields().toString() + " from ");
-        return new MysqlTable(query.append(ReflectUtility.createOneToManyJoinSql(tableClass)));
+        query.append("select " + query.getQueryFields().toString() + " from ")
+                .append(ReflectUtility.createOneToManyJoinSql(parent, child));
+        return new MysqlCondition(query, false);
     }
 
     public MysqlTable table(Class tableClass){

@@ -22,6 +22,14 @@ public class MysqlCondition extends QueryDataConverter implements ConditionInter
             mysqlQuery.setWhereBegan(true);
         }
     }
+
+    public MysqlCondition(QueryInfo mysqlQuery, boolean startWhereCondition) {
+        super(mysqlQuery);
+        if(startWhereCondition && !mysqlQuery.isWhereBegan()){
+            mysqlQuery.append(" WHERE 1=1");
+            mysqlQuery.setWhereBegan(true);
+        }
+    }
 }
 
 
