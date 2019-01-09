@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.idolofidles</groupId>
     <artifactId>MysqlORM</artifactId>
-    <version>1.1.4</version>
+    <version>1.1.5</version>
     <packaging>jar</packaging>
     <name>MysqlORM</name>
     <description>Blueprint project for Java libraries to be published on Maven Central</description>
