@@ -106,9 +106,9 @@ public class RelationInfo {
     }
 
     public boolean haveRelationInfo(){
-        if(StringUtils.isNullOrEmpty(getNativeColumn()) || StringUtils.isNullOrEmpty(getMatchingColumn())) return false;
+        if(Util.isEmpty(getNativeColumn()) || Util.isEmpty(getMatchingColumn())) return false;
         if(isManyToMany()){
-            if(StringUtils.isNullOrEmpty(getNativeRelationColumn()) || StringUtils.isNullOrEmpty(getMatchingRelationColumn())) return false;
+            if(Util.isEmpty(getNativeRelationColumn()) || Util.isEmpty(getMatchingRelationColumn())) return false;
         }
         return true;
     }
