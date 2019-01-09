@@ -1,9 +1,11 @@
 package safayat.orm.reflect;
 
+import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
+import safayat.orm.query.MysqlQuery;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -11,8 +13,8 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created by safayat on 10/22/18.
@@ -172,29 +174,7 @@ public class ReflectUtility {
 
     }
 
-    public static String createOneToManyJoinSql(
-            Class parent, Class child
-            ) throws Exception{
 
-        List<Annotation> annotations = Util.getFieldAnnotations(parent, OneToMany.class);
-        annotations = annotations.stream()
-                .filter(annotation -> ((OneToMany) annotation).type().getName().equalsIgnoreCase(child.getName()))
-                .collect(Collectors.toList());
-        if(annotations.isEmpty()) throw new Exception("Relation missing");
-        OneToMany oneToMany = (OneToMany)annotations.get(0);
-        if(!ReflectUtility.haveOneToManyRelationInfo(oneToMany)) throw new Exception("Not enough relation info");
-        String parentTableName = ConfigManager.getInstance().getTableName(parent);
-        String childTableName = ConfigManager.getInstance().getTableName(oneToMany.type());
-        return new StringBuilder(" ")
-                .append(parentTableName).append(" ").append(parentTableName.toLowerCase())
-                .append(" join ")
-                .append(childTableName).append(" ").append(childTableName.toLowerCase())
-                .append(" on ")
-                .append(parentTableName.toLowerCase()).append(".").append(oneToMany.nativeColumnName())
-                .append(" = ")
-                .append(childTableName.toLowerCase()).append(".").append(oneToMany.matchingColumnName())
-                .toString();
-    }
 
     public static String createSingleRowUpdateSqlString(Object o) throws Exception{
 
@@ -268,6 +248,16 @@ public class ReflectUtility {
 
     }
 
+    public static boolean haveManyToManyRelationInfo(ManyToMany manyToMany) throws Exception {
+       return !(manyToMany.matchingColumnName().trim().isEmpty()
+               || manyToMany.nativeColumnName().trim().isEmpty()
+               || manyToMany.relationTable().trim().isEmpty()
+               || manyToMany.matchingRelationColumnName().trim().isEmpty()
+               || manyToMany.nativeRelationColumnName().trim().isEmpty()
+       );
+
+    }
+
     public static boolean haveManyToOneRelationInfo(ManyToOne manyToOne) throws Exception {
        return !(manyToOne.matchingColumnName().trim().isEmpty()
                || manyToOne.nativeColumnName().trim().isEmpty());
@@ -305,6 +295,15 @@ public class ReflectUtility {
         String table = ConfigManager.getInstance().getTableName(clazz);
         return table + "." + table.toLowerCase();
 
+    }
+
+
+    public static RelationInfo getRelationAnnotation(Class parent, Class annotationType, Class childType) {
+       return Util.getFieldAnnotations(parent, annotationType).stream()
+              .map(a->new RelationInfo(a))
+              .filter(r -> r.getFieldType() == childType)
+              .findFirst()
+              .get();
     }
 
 

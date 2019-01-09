@@ -1,9 +1,13 @@
 package safayat.orm.query;
 
+import safayat.orm.annotation.ManyToMany;
+import safayat.orm.annotation.ManyToOne;
+import safayat.orm.annotation.OneToMany;
 import safayat.orm.config.ConfigManager;
 import safayat.orm.dao.GeneralRepositoryManager;
 import safayat.orm.query.util.Util;
 import safayat.orm.reflect.ReflectUtility;
+import safayat.orm.reflect.RelationInfo;
 
 import java.sql.ResultSet;
 import java.util.List;
@@ -68,7 +72,7 @@ public class MysqlQuery{
             code = splitted[1];
             return new MysqlTable(query).table(splitted[0], code);
         }
-        return new MysqlTable(query).table(tableName,"");
+        return new MysqlTable(query).table(tableName, "");
     }
 
     public MysqlTable table(Class tableClass, String alias){
@@ -76,9 +80,32 @@ public class MysqlQuery{
     }
 
     public MysqlCondition oneToMany(Class parent, Class child) throws Exception{
+        RelationInfo oneToMany = ReflectUtility.getRelationAnnotation(parent, OneToMany.class, child);
+        if(oneToMany == null) throw new Exception("One to many Relation not found!");
         query.setTableBegan(true);
         query.append("select " + query.getQueryFields().toString() + " from ")
-                .append(ReflectUtility.createOneToManyJoinSql(parent, child));
+                .append(oneToMany.createJoinSql(parent));
+        return new MysqlCondition(query, false);
+    }
+
+    public MysqlCondition manyToOne(Class parent, Class child) throws Exception{
+        RelationInfo manyToOne = ReflectUtility.getRelationAnnotation(parent, ManyToOne.class, child);
+        if(manyToOne == null) throw new Exception("Many to many Relation not found!");
+
+        query.setTableBegan(true);
+        query.append("select " + query.getQueryFields().toString() + " from ")
+                .append(manyToOne.createJoinSql(parent));
+        return new MysqlCondition(query, false);
+    }
+
+    public MysqlCondition manyToMany(Class parent, Class child) throws Exception{
+
+        RelationInfo manyToMany = ReflectUtility.getRelationAnnotation(parent, ManyToMany.class, child);
+        if(manyToMany == null) throw new Exception("Many to many Relation not found!");
+        query.setTableBegan(true);
+        query.append("select " + query.getQueryFields().toString() + " from ")
+                .append(manyToMany.getTableName(parent)).append(" ").append(manyToMany.getTableName(parent).toLowerCase())
+                .append(manyToMany.createManyToManyJoinSql(parent));
         return new MysqlCondition(query, false);
     }
 
