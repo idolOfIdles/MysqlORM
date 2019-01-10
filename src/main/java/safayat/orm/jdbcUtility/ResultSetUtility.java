@@ -54,7 +54,11 @@ public class ResultSetUtility {
 
     public  <T> T mapRow(Class<T> clazz) throws Exception{
 
-        List<Integer> columnIndexes =  metadata.getColumnIndexes(clazz.getSimpleName().toLowerCase());
+        List<Integer> columnIndexes =  metadata.getColumnIndexes(
+                ConfigManager
+                .getInstance()
+                .getTableName(clazz)
+                .toLowerCase());
         T newClazz = clazz.newInstance();
         for(int index : columnIndexes){
             mapColumn(newClazz, index);
