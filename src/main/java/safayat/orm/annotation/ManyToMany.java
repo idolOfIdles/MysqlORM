@@ -10,9 +10,12 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD) //can use in method only.
-public @interface ManyToOne{
+public @interface ManyToMany {
     String nativeColumnName() default "";
+    String nativeRelationColumnName() default "";
     String matchingColumnName() default "";
-    String name() default "";
+    String matchingRelationColumnName() default "";
+    String relationTable() default "";
+    String name();
     Class type();
 }

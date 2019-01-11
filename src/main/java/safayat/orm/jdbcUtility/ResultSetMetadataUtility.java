@@ -39,7 +39,7 @@ public class ResultSetMetadataUtility {
             try {
 
                 for (int column = 1; column <= resultSetMetaData.getColumnCount(); column++) {
-                    List<Integer> columns = columnsByTable.getOrDefault(resultSetMetaData.getTableName(column), new ArrayList<Integer>());
+                    List<Integer> columns = columnsByTable.getOrDefault(resultSetMetaData.getTableName(column).toLowerCase(), new ArrayList<Integer>());
                     if (columns.size() == 0) {
                         columnsByTable.put(resultSetMetaData.getTableName(column).toLowerCase(), columns);
                     }

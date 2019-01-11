@@ -34,6 +34,12 @@ public class Crud {
         GeneralRepositoryManager.getInstance().getGeneralRepository().update(values, connection);
     }
 
+    public static  <T> void save(T t)throws Exception{
+        GeneralRepositoryManager.getInstance().getGeneralRepository().insertOrUpdate(t);
+    }
+    public static  <T> void save(T t, Connection connection)throws Exception{
+        GeneralRepositoryManager.getInstance().getGeneralRepository().insertOrUpdate(t, connection);
+    }
     public static  <T> void insert(T t)throws Exception{
         GeneralRepositoryManager.getInstance().getGeneralRepository().insert(t);
     }

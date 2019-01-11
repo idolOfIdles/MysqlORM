@@ -2,17 +2,14 @@ package safayat.orm.config;
 
 import safayat.orm.annotation.Table;
 import safayat.orm.interfaces.ConnectionPoolInterface;
+import safayat.orm.jdbcUtility.TableInfo;
 import safayat.orm.reflect.FileManager;
 import safayat.orm.reflect.Util;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.sql.*;
+import java.util.*;
 
 /**
  * Created by safayat on 10/29/18.
@@ -22,6 +19,7 @@ public class ConfigManager {
     private Map<String, Map<String, Class>> databaseClassTableMap;
     private Map<Class, Table> tableAnnotationByClass;
     private Map<String, Class> classMap;
+    private Map<String, Map<String,TableInfo>> primaryInfoMapForDatabases;
     private String dbUserName;
     private String dbPassword;
     private String dbName;
@@ -48,6 +46,12 @@ public class ConfigManager {
             e.printStackTrace();
         }
         populateTableMapping();
+        try {
+            primaryInfoMapForDatabases = new HashMap<>();
+            readAndCacheDatabaseMetadata(getDbName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void readProperties() throws IOException {
@@ -146,6 +150,81 @@ public class ConfigManager {
     public Connection getConnection() throws SQLException {
         if(connectionPool != null) return connectionPool.getConnection();
         return DriverManager.getConnection(dbUrl, dbUserName, dbPassword);
+    }
+
+
+    private void readAndCacheDatabaseMetadata(String databaseName) throws Exception {
+
+        Map<String, TableInfo> tableInfoMap = new HashMap<>();
+        primaryInfoMapForDatabases.put(databaseName, tableInfoMap);
+        Connection connection = getConnection();
+        String[] types = {"TABLE"};
+        ResultSet resultSet = connection.getMetaData().getTables(databaseName, null,"", types);
+        List<String> tableNames = new ArrayList<>();
+        while (resultSet.next()){
+            tableNames.add(resultSet.getString("TABLE_NAME"));
+        }
+
+        resultSet.close();
+
+        for(String tableName : tableNames){
+            Class tableClass = getClassByTableName(tableName ,databaseName);
+            if( tableClass == null) continue;
+            resultSet = connection.getMetaData().getPrimaryKeys(getDbName(), null, tableName);
+            TableInfo tableInfo = new TableInfo(tableName, getDbName(), tableClass);
+
+            while (resultSet.next()){
+                String columnName = resultSet.getString(4);
+                tableInfo.addPrimaryKey(columnName, null);
+                tableInfo.addClassPrimaryKey(columnName, null);
+            }
+            resultSet.close();
+            updatePrimaryKeyInfo(connection, databaseName, tableName, tableInfo);
+            tableInfoMap.put(tableName.toLowerCase(), tableInfo);
+        }
+
+
+
+    }
+
+    private  void updatePrimaryKeyInfo(Connection connection
+            , String databaseName
+            , String tableName
+            , TableInfo tableInfo) throws SQLException {
+
+
+        for(String primaryKey : tableInfo.getPrimaryKeys()){
+            ResultSet resultSet1 = connection.getMetaData().getColumns(databaseName, null, tableName, primaryKey);
+            while (resultSet1.next()){
+                Class primaryKeyType = Util.getClassByMysqlType(resultSet1.getInt("DATA_TYPE"));
+                boolean autoIncrement = resultSet1.getString("IS_AUTOINCREMENT").equalsIgnoreCase("YES");
+                tableInfo.addPrimaryKey(primaryKey,primaryKeyType);
+                tableInfo.setIsAutoIncrement(autoIncrement);
+                Class tableAsClass = getClassByTableName(tableInfo.getTableName());
+                try {
+                    Class primaryKeyTypeInClass = tableAsClass.getDeclaredField(primaryKey).getType();
+                    tableInfo.addClassPrimaryKey(primaryKey, primaryKeyTypeInClass);
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            resultSet1.close();
+        }
+    }
+
+
+
+    public TableInfo getTableInfo(String tableName) throws Exception {
+        return primaryInfoMapForDatabases.get(getDbName()).get(tableName.toLowerCase());
+    }
+    public TableInfo getTableInfo(Class table) throws Exception {
+        return getTableInfo(getTableName(table));
+    }
+
+    public boolean havePrimaryKey(Class table) throws Exception {
+        TableInfo tableInfo = getTableInfo(table);
+        return tableInfo != null && tableInfo.getPrimaryKeyDbTypeByName().size() > 0;
     }
 
 }

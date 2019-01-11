@@ -3,6 +3,7 @@ package safayat.orm.jdbcUtility;
 import safayat.orm.config.ConfigManager;
 import safayat.orm.reflect.ReflectUtility;
 import safayat.orm.reflect.RelationAnnotationInfo;
+import safayat.orm.reflect.RelationInfo;
 import safayat.orm.reflect.Util;
 
 import java.lang.reflect.Method;
@@ -54,7 +55,11 @@ public class ResultSetUtility {
 
     public  <T> T mapRow(Class<T> clazz) throws Exception{
 
-        List<Integer> columnIndexes =  metadata.getColumnIndexes(clazz.getSimpleName().toLowerCase());
+        List<Integer> columnIndexes =  metadata.getColumnIndexes(
+                ConfigManager
+                .getInstance()
+                .getTableName(clazz)
+                .toLowerCase());
         T newClazz = clazz.newInstance();
         for(int index : columnIndexes){
             mapColumn(newClazz, index);
@@ -132,73 +137,76 @@ public class ResultSetUtility {
     }
 
 
-    private List<String[]> processResultSetData(Map<String, Object>[] subRowMaps) throws Exception{
+    private List<MultipleTableRow> processResultSetData() throws Exception{
 
-        for(int i=0;i<subRowMaps.length;i++){
-            subRowMaps[i] = new HashMap<String, Object>();
-        }
+        SingleTableRowMap singleTableRowMap = new SingleTableRowMap();
+        List<MultipleTableRow> multipleTableRows = new ArrayList<>();
 
-        List<String[]> rowsMappedAsKeys = new ArrayList<String[]>();
         while (getResultSet().next()){
-            String[] rowAsTableKeys = new String[subRowMaps.length];
-            for(int i=0;i<subRowMaps.length;i++){
+
+            MultipleTableRow multipleTableRow = new MultipleTableRow();
+
+            for(int i=0;i<metadata.getTableCount();i++){
+
                 String tableName =  metadata.getTable(i);
-                String tableKey = this.createTableKeyForCurrentRow(tableName);
-                rowAsTableKeys[i] = tableKey;
-                Map<String,Object> subRowMap  = subRowMaps[i];
-                Object subRow = subRowMap.get(tableKey);
-                if(subRow == null){
-                    Class childClass = ConfigManager.getInstance().getClassByTableName(tableName);
-                    if(childClass != null){
-                        Object childObject = this.mapRow(childClass);
-                        subRowMap.put(tableKey, childObject);
-                    }
+                String tableKey = createTableKeyForCurrentRow(tableName);
+                Class tableClass = ConfigManager.getInstance().getClassByTableName(tableName);
+                SingleTableRow singleTableRow = singleTableRowMap.getSingleTableRow(tableName, tableKey);
+
+                if(singleTableRow == null){
+                    Object childObject = mapRow(tableClass);
+                    singleTableRow = new SingleTableRow(childObject, tableClass, tableName, tableKey);
+                    singleTableRowMap.addNewRow(tableName, tableKey, singleTableRow);
+                    multipleTableRow.addSingleRow(tableName, singleTableRow);
                 }
             }
-            rowsMappedAsKeys.add(rowAsTableKeys);
+
+            multipleTableRows.add(multipleTableRow);
         }
 
-        return rowsMappedAsKeys;
+        return multipleTableRows;
     }
     public <T> List<T> mapResultsetToObjects(Class<T> clazz) throws Exception{
 
-        Map<String, Object>[] subRowMaps = new Map[metadata.getTableCount()];
-
-        List<String[]> rowsMappedAsKeys = processResultSetData(subRowMaps);
-
+        String rootTableName = ConfigManager.getInstance().getTableName(clazz);
         Map<String, Class> relatedClassByName = new HashMap<String, Class>();
         Map<Class, RelationAnnotationInfo> parentClassMap = new HashMap<Class, RelationAnnotationInfo>();
-        ReflectUtility.populateDescentAnnotations(clazz, relatedClassByName, parentClassMap);
+        ReflectUtility.populateRelationDataStructures(clazz, relatedClassByName, parentClassMap);
+
         List<T> data = new ArrayList<T>();
-        for(int rowIndex=0;rowIndex<rowsMappedAsKeys.size();rowIndex++){
-            String[] rowAsKeys = rowsMappedAsKeys.get(rowIndex);
-            for(int tableIndex=0;tableIndex<metadata.getTableCount();tableIndex++){
-                String tableName = metadata.getTable(tableIndex);
-                Class tableClass = relatedClassByName.get(tableName);
-                String key = rowAsKeys[tableIndex];
-                if(tableClass != null){
-                    Object tableObject = subRowMaps[tableIndex].get(key);
-                    if(tableObject == null) continue;
-                    if( tableName.equalsIgnoreCase(clazz.getSimpleName()) == false){
-                        RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(tableClass);
-                        if(relationAnnotationInfo != null){
-                            Class parentClass = relationAnnotationInfo.getParent();
-                            String parentTable = parentClass.getSimpleName();
-                            String parentKey = rowAsKeys[metadata.getTableIndex(parentTable)];
-                            if(relationAnnotationInfo.isAlreadyMapped(parentKey, key)){
-                                continue;
-                            }
-                            Object parentObject = subRowMaps[metadata.getTableIndex(parentTable)].get(parentKey);
-                            ReflectUtility.mapRelation(relationAnnotationInfo.getRelationAnnotation(), parentObject, tableObject);
-                            relationAnnotationInfo.addMap(parentKey, key);
-                        }
-                    }
-                }
-            }
+        List<MultipleTableRow> compressedRows = processResultSetData();
+
+        for(MultipleTableRow multipleTableRow : compressedRows){
+
+           for(String table : metadata.getTables()){
+
+               SingleTableRow singleTableRow = multipleTableRow.getSingleTableRowByTableName(table);
+
+               if(singleTableRow.tableNameMaches(rootTableName) || singleTableRow.getType() == null) continue;
+
+               RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(singleTableRow.getType());
+
+               if(relationAnnotationInfo == null) continue;
+
+               String parentTable = ConfigManager.getInstance().getTableName(relationAnnotationInfo.getParent());
+               SingleTableRow parentSingleTableRow = multipleTableRow.getSingleTableRowByTableName(parentTable);
+
+               if(relationAnnotationInfo.isAlreadyMapped(parentSingleTableRow.getRowAsString()
+                       , singleTableRow.getRowAsString())) continue;
+
+               ReflectUtility.mapRelation(new RelationInfo(relationAnnotationInfo.getRelationAnnotation())
+                       , parentSingleTableRow.getRow()
+                       , singleTableRow.getRow());
+
+               relationAnnotationInfo.addMap(parentSingleTableRow.getRowAsString(), singleTableRow.getRowAsString());
+           }
+
         }
-        for(Object o : subRowMaps[metadata.getTableIndex(clazz.getSimpleName())].values()){
-            data.add((T)o);
+
+        for(MultipleTableRow multipleTableRow : compressedRows){
+            data.add((T)multipleTableRow.getSingleTableRowByTableName(rootTableName).getRow());
         }
+
         return data;
     }
 

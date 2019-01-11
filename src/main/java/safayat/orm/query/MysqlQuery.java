@@ -1,10 +1,15 @@
 package safayat.orm.query;
 
+import safayat.orm.annotation.ManyToMany;
+import safayat.orm.annotation.ManyToOne;
+import safayat.orm.annotation.OneToMany;
 import safayat.orm.config.ConfigManager;
 import safayat.orm.dao.GeneralRepositoryManager;
 import safayat.orm.query.util.Util;
 import safayat.orm.reflect.ReflectUtility;
+import safayat.orm.reflect.RelationInfo;
 
+import java.sql.ResultSet;
 import java.util.List;
 
 /**
@@ -16,13 +21,10 @@ import java.util.List;
 
 public class MysqlQuery{
 
-    private StringBuilder query;
-    private StringBuilder queryFields;
-
+    private QueryInfo query;
     public MysqlQuery(String fields) {
-        this.query = new StringBuilder();
-        queryFields = new StringBuilder();
-        queryFields.append(fields);
+        query = new QueryInfo();
+        query.appendFields(fields);
     }
 
     public static MysqlQuery fields(String fields){
@@ -45,28 +47,66 @@ public class MysqlQuery{
         return GeneralRepositoryManager.getInstance().getGeneralRepository().getAll(clazz, limit, offset);
     }
 
+    public static ResultSet execute(String sql){
+        return GeneralRepositoryManager
+                .getInstance()
+                .getGeneralRepository()
+                .executeQuery(sql)
+                .getResultSet();
+    }
+
     public String toString() {
         return query.toString();
     }
 
     public MysqlTable table(String tableName, String alias){
-        query.append("select " + queryFields.toString() + " from ");
+        query.append("select " + query.getQueryFields().toString() + " from ");
         return new MysqlTable(query).table(tableName, alias);
     }
 
     public MysqlTable table(String tableName){
-        query.append("select " + queryFields.toString() + " from ");
+        query.append("select " + query.getQueryFields().toString() + " from ");
         String[] splitted = tableName.trim().split(" ");
         String code = "";
         if(splitted.length > 1){
             code = splitted[1];
             return new MysqlTable(query).table(splitted[0], code);
         }
-        return new MysqlTable(query).table(tableName,"");
+        return new MysqlTable(query).table(tableName, "");
     }
 
     public MysqlTable table(Class tableClass, String alias){
         return table(ConfigManager.getInstance().getTableName(tableClass), alias);
+    }
+
+    public MysqlCondition oneToMany(Class parent, Class child) throws Exception{
+        RelationInfo oneToMany = ReflectUtility.getRelationAnnotation(parent, OneToMany.class, child);
+        if(oneToMany == null) throw new Exception("One to many Relation not found!");
+        query.setTableBegan(true);
+        query.append("select " + query.getQueryFields().toString() + " from ")
+                .append(oneToMany.createJoinSql(parent));
+        return new MysqlCondition(query, false);
+    }
+
+    public MysqlCondition manyToOne(Class parent, Class child) throws Exception{
+        RelationInfo manyToOne = ReflectUtility.getRelationAnnotation(parent, ManyToOne.class, child);
+        if(manyToOne == null) throw new Exception("Many to many Relation not found!");
+
+        query.setTableBegan(true);
+        query.append("select " + query.getQueryFields().toString() + " from ")
+                .append(manyToOne.createJoinSql(parent));
+        return new MysqlCondition(query, false);
+    }
+
+    public MysqlCondition manyToMany(Class parent, Class child) throws Exception{
+
+        RelationInfo manyToMany = ReflectUtility.getRelationAnnotation(parent, ManyToMany.class, child);
+        if(manyToMany == null) throw new Exception("Many to many Relation not found!");
+        query.setTableBegan(true);
+        query.append("select " + query.getQueryFields().toString() + " from ")
+                .append(manyToMany.getTableName(parent)).append(" ").append(manyToMany.getTableName(parent).toLowerCase())
+                .append(manyToMany.createManyToManyJoinSql(parent));
+        return new MysqlCondition(query, false);
     }
 
     public MysqlTable table(Class tableClass){

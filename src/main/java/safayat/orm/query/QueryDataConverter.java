@@ -1,6 +1,7 @@
 package safayat.orm.query;
 
 import safayat.orm.dao.GeneralRepositoryManager;
+import safayat.orm.query.util.Util;
 
 import java.util.List;
 
@@ -10,13 +11,18 @@ import java.util.List;
 
 public abstract class QueryDataConverter {
 
-    StringBuilder query;
+    QueryInfo query;
 
-    protected QueryDataConverter(StringBuilder mysqlQuery) {
+    public QueryInfo getQuery(){
+        return query;
+    }
+
+    protected QueryDataConverter(QueryInfo mysqlQuery) {
         this.query = mysqlQuery;
     }
 
     public <I> List<I> toList(Class<I> clazz){
+        System.out.println(query.toString());
         return GeneralRepositoryManager
                 .getInstance()
                 .getGeneralRepository()

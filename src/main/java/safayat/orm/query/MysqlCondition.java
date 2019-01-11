@@ -1,5 +1,9 @@
 package safayat.orm.query;
 
+import safayat.orm.interfaces.ConditionInterface;
+import safayat.orm.interfaces.GroupByInterface;
+import safayat.orm.interfaces.LimitInterface;
+import safayat.orm.interfaces.OrderInterface;
 import safayat.orm.query.util.Util;
 
 import java.util.List;
@@ -9,81 +13,23 @@ import java.util.List;
  */
 
 
-public class MysqlCondition extends QueryDataConverter{
+public class MysqlCondition extends QueryDataConverter implements ConditionInterface, OrderInterface, GroupByInterface, LimitInterface{
 
-    private MysqlOrder mysqlOrder;
-    private MysqlGroupBy mysqlGroupBy;
-    public MysqlCondition(StringBuilder mysqlQuery) {
+    public MysqlCondition(QueryInfo mysqlQuery) {
         super(mysqlQuery);
-        this.query = mysqlQuery;
-        mysqlQuery.append(" WHERE 1=1");
-    }
-
-
-    public MysqlCondition filter(String expression, Object value){
-        query.append(" AND ");
-        query.append(expression).append(Util.toMysqlString(value));
-        return this;
-    }
-
-    public MysqlCondition orFilter(String expression, Object value){
-        query.append(" OR ");
-        query.append(expression).append(Util.toMysqlString(value));
-        return this;
-    }
-
-    public MysqlCondition filter(String expression){
-        query.append(" AND ");
-        query.append(expression);
-        return this;
-    }
-
-    public MysqlCondition orFilter(String expression){
-        query.append(" OR ");
-        query.append(expression);
-        return this;
-    }
-
-    private void basicInOperation(String field, List<Object> values){
-        query.append(field).append(" in ").append("(");
-        boolean firstElement = true;
-        for(Object o : values){
-            if(!firstElement) query.append(",");
-            firstElement = false;
-            query.append(Util.toMysqlString(o));
+        if(!mysqlQuery.isWhereBegan()){
+            mysqlQuery.append(" WHERE 1=1");
+            mysqlQuery.setWhereBegan(true);
         }
-        query.append(")");
-    }
-    public MysqlCondition orIn(String field, List<Object> values){
-        query.append(" OR ");
-        basicInOperation(field, values);
-        return this;
-    }
-    public MysqlCondition in(String field, List<Object> values){
-        query.append(" AND ");
-        basicInOperation(field, values);
-        return this;
     }
 
-
-    public  MysqlOrder order(String orderKey, String sort){
-        if(mysqlOrder == null) mysqlOrder = new MysqlOrder(query);
-        return mysqlOrder.order(orderKey,sort);
+    public MysqlCondition(QueryInfo mysqlQuery, boolean startWhereCondition) {
+        super(mysqlQuery);
+        if(startWhereCondition && !mysqlQuery.isWhereBegan()){
+            mysqlQuery.append(" WHERE 1=1");
+            mysqlQuery.setWhereBegan(true);
+        }
     }
-
-    public QueryDataConverter limit(int limit){
-        return new Limit(query).limit(limit);
-    }
-
-    public QueryDataConverter limit(int limit, int offset){
-        return new Limit(query).limit(limit, offset);
-    }
-
-    public MysqlGroupBy groupBy(String groupByKey){
-        if(mysqlGroupBy == null) mysqlGroupBy = new MysqlGroupBy(query);
-        return mysqlGroupBy.groupBy(groupByKey);
-    }
-
 }
 
 
