@@ -20,6 +20,10 @@ public class RelationInfo {
         this.relation = relation;
     }
 
+    public boolean isRelationAnnotation(){
+        return isManyToOne() || isOneToMany() || isManyToMany();
+    }
+
     public boolean isOneToMany(){
         return relation instanceof OneToMany;
     }

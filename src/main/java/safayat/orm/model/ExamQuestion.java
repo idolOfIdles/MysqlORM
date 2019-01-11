@@ -1,5 +1,6 @@
 package safayat.orm.model;
 
+import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.model.Option;
@@ -7,15 +8,23 @@ import safayat.orm.model.Option;
 import java.util.Date;
 import java.util.List;
 
-public class Question{
+public class ExamQuestion {
   private Integer id;
   private Integer questionInfoId;
   private String question;
   private Date createDate;
   private Date updateDate;
 
-  @ManyToOne(nativeColumnName = "questionInfoId", matchingColumnName = "id", name = "questionInfo" , type = QuestionInfo.class)
-  QuestionInfo questionInfo;
+
+  @ManyToMany(type = Option.class
+          , name = "answerList"
+          , matchingColumnName = "id"
+          , nativeColumnName = "id"
+          , nativeRelationColumnName = "qt_id"
+          , matchingRelationColumnName = "op_id"
+          , relationTable = "answer"
+  )
+  List<Option> answerList;
 
   @OneToMany(type = Option.class, name = "optionList", matchingColumnName = "question_id", nativeColumnName = "id")
   List<Option> optionList;
@@ -61,11 +70,11 @@ public class Question{
         this.optionList = optionList;
     }
 
-  public QuestionInfo getQuestionInfo() {
-    return questionInfo;
-  }
+    public List<Option> getAnswerList() {
+        return answerList;
+    }
 
-  public void setQuestionInfo(QuestionInfo questionInfo) {
-    this.questionInfo = questionInfo;
-  }
+    public void setAnswerList(List<Option> answerList) {
+        this.answerList = answerList;
+    }
 }

@@ -3,6 +3,7 @@ package safayat.orm.jdbcUtility;
 import safayat.orm.config.ConfigManager;
 import safayat.orm.reflect.ReflectUtility;
 import safayat.orm.reflect.RelationAnnotationInfo;
+import safayat.orm.reflect.RelationInfo;
 import safayat.orm.reflect.Util;
 
 import java.lang.reflect.Method;
@@ -172,7 +173,7 @@ public class ResultSetUtility {
 
         Map<String, Class> relatedClassByName = new HashMap<String, Class>();
         Map<Class, RelationAnnotationInfo> parentClassMap = new HashMap<Class, RelationAnnotationInfo>();
-        ReflectUtility.populateDescentAnnotations(clazz, relatedClassByName, parentClassMap);
+        ReflectUtility.populateRelationDataStructures(clazz, relatedClassByName, parentClassMap);
         List<T> data = new ArrayList<T>();
         for(int rowIndex=0;rowIndex<rowsMappedAsKeys.size();rowIndex++){
             String[] rowAsKeys = rowsMappedAsKeys.get(rowIndex);
@@ -183,24 +184,24 @@ public class ResultSetUtility {
                 if(tableClass != null){
                     Object tableObject = subRowMaps[tableIndex].get(key);
                     if(tableObject == null) continue;
-                    if( tableName.equalsIgnoreCase(clazz.getSimpleName()) == false){
+                    if( tableName.equalsIgnoreCase(ConfigManager.getInstance().getTableName(clazz)) == false){
                         RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(tableClass);
                         if(relationAnnotationInfo != null){
                             Class parentClass = relationAnnotationInfo.getParent();
-                            String parentTable = parentClass.getSimpleName();
+                            String parentTable = ConfigManager.getInstance().getTableName(parentClass);
                             String parentKey = rowAsKeys[metadata.getTableIndex(parentTable)];
                             if(relationAnnotationInfo.isAlreadyMapped(parentKey, key)){
                                 continue;
                             }
                             Object parentObject = subRowMaps[metadata.getTableIndex(parentTable)].get(parentKey);
-                            ReflectUtility.mapRelation(relationAnnotationInfo.getRelationAnnotation(), parentObject, tableObject);
+                            ReflectUtility.mapRelation(new RelationInfo(relationAnnotationInfo.getRelationAnnotation()), parentObject, tableObject);
                             relationAnnotationInfo.addMap(parentKey, key);
                         }
                     }
                 }
             }
         }
-        for(Object o : subRowMaps[metadata.getTableIndex(clazz.getSimpleName())].values()){
+        for(Object o : subRowMaps[metadata.getTableIndex(ConfigManager.getInstance().getTableName(clazz))].values()){
             data.add((T)o);
         }
         return data;
