@@ -2,7 +2,7 @@ package safayat.orm.config;
 
 import safayat.orm.annotation.Table;
 import safayat.orm.interfaces.ConnectionPoolInterface;
-import safayat.orm.jdbcUtility.PrimaryKeyInfo;
+import safayat.orm.jdbcUtility.TableInfo;
 import safayat.orm.reflect.FileManager;
 import safayat.orm.reflect.Util;
 
@@ -19,7 +19,7 @@ public class ConfigManager {
     private Map<String, Map<String, Class>> databaseClassTableMap;
     private Map<Class, Table> tableAnnotationByClass;
     private Map<String, Class> classMap;
-    private Map<String, Map<String,PrimaryKeyInfo>> primaryInfoMapForDatabases;
+    private Map<String, Map<String,TableInfo>> primaryInfoMapForDatabases;
     private String dbUserName;
     private String dbPassword;
     private String dbName;
@@ -155,8 +155,8 @@ public class ConfigManager {
 
     private void readAndCacheDatabaseMetadata(String databaseName) throws Exception {
 
-        Map<String, PrimaryKeyInfo> primaryKeyInfoByTable = new HashMap<>();
-        primaryInfoMapForDatabases.put(databaseName, primaryKeyInfoByTable);
+        Map<String, TableInfo> tableInfoMap = new HashMap<>();
+        primaryInfoMapForDatabases.put(databaseName, tableInfoMap);
         Connection connection = getConnection();
         String[] types = {"TABLE"};
         ResultSet resultSet = connection.getMetaData().getTables(databaseName, null,"", types);
@@ -168,17 +168,19 @@ public class ConfigManager {
         resultSet.close();
 
         for(String tableName : tableNames){
-            if(getClassByTableName(tableName ,databaseName) == null) continue;
+            Class tableClass = getClassByTableName(tableName ,databaseName);
+            if( tableClass == null) continue;
             resultSet = connection.getMetaData().getPrimaryKeys(getDbName(), null, tableName);
-            PrimaryKeyInfo primaryKeyInfo = new PrimaryKeyInfo(tableName, getDbName());
+            TableInfo tableInfo = new TableInfo(tableName, getDbName(), tableClass);
+
             while (resultSet.next()){
                 String columnName = resultSet.getString(4);
-                primaryKeyInfo.addPrimaryKey(columnName, null);
-                primaryKeyInfo.addClassPrimaryKey(columnName, null);
+                tableInfo.addPrimaryKey(columnName, null);
+                tableInfo.addClassPrimaryKey(columnName, null);
             }
             resultSet.close();
-            updatePrimaryKeyInfo(connection, databaseName, tableName, primaryKeyInfo);
-            primaryKeyInfoByTable.put(tableName.toLowerCase(), primaryKeyInfo);
+            updatePrimaryKeyInfo(connection, databaseName, tableName, tableInfo);
+            tableInfoMap.put(tableName.toLowerCase(), tableInfo);
         }
 
 
@@ -188,20 +190,20 @@ public class ConfigManager {
     private  void updatePrimaryKeyInfo(Connection connection
             , String databaseName
             , String tableName
-            , PrimaryKeyInfo primaryKeyInfo) throws SQLException {
+            , TableInfo tableInfo) throws SQLException {
 
 
-        for(String primaryKey : primaryKeyInfo.getPrimaryKeys()){
+        for(String primaryKey : tableInfo.getPrimaryKeys()){
             ResultSet resultSet1 = connection.getMetaData().getColumns(databaseName, null, tableName, primaryKey);
             while (resultSet1.next()){
                 Class primaryKeyType = Util.getClassByMysqlType(resultSet1.getInt("DATA_TYPE"));
                 boolean autoIncrement = resultSet1.getString("IS_AUTOINCREMENT").equalsIgnoreCase("YES");
-                primaryKeyInfo.addPrimaryKey(primaryKey,primaryKeyType);
-                primaryKeyInfo.setIsAutoIncrement(autoIncrement);
-                Class tableAsClass = getClassByTableName(primaryKeyInfo.getTableName());
+                tableInfo.addPrimaryKey(primaryKey,primaryKeyType);
+                tableInfo.setIsAutoIncrement(autoIncrement);
+                Class tableAsClass = getClassByTableName(tableInfo.getTableName());
                 try {
                     Class primaryKeyTypeInClass = tableAsClass.getDeclaredField(primaryKey).getType();
-                    primaryKeyInfo.addClassPrimaryKey(primaryKey, primaryKeyTypeInClass);
+                    tableInfo.addClassPrimaryKey(primaryKey, primaryKeyTypeInClass);
                 } catch (NoSuchFieldException e) {
                     e.printStackTrace();
                 }
@@ -213,16 +215,16 @@ public class ConfigManager {
 
 
 
-    public PrimaryKeyInfo getPrimaryKeyInfo(String tableName) throws Exception {
+    public TableInfo getTableInfo(String tableName) throws Exception {
         return primaryInfoMapForDatabases.get(getDbName()).get(tableName.toLowerCase());
     }
-    public PrimaryKeyInfo getPrimaryKeyInfo(Class table) throws Exception {
-        return getPrimaryKeyInfo(getTableName(table));
+    public TableInfo getTableInfo(Class table) throws Exception {
+        return getTableInfo(getTableName(table));
     }
 
     public boolean havePrimaryKey(Class table) throws Exception {
-        PrimaryKeyInfo primaryKeyInfo = getPrimaryKeyInfo(table);
-        return primaryKeyInfo != null && primaryKeyInfo.getPrimaryKeyDbTypeByName().size() > 0;
+        TableInfo tableInfo = getTableInfo(table);
+        return tableInfo != null && tableInfo.getPrimaryKeyDbTypeByName().size() > 0;
     }
 
 }

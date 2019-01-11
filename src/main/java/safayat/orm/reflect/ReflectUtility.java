@@ -5,7 +5,6 @@ import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
-import safayat.orm.query.MysqlQuery;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -13,28 +12,27 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created by safayat on 10/22/18.
  */
 public class ReflectUtility {
 
-    public static <P,C> void mapRelation(Annotation annotation, P parent, C child  ) throws Exception{
+    public static <P,C> void mapRelation(RelationInfo relation, P parent, C child  ) throws Exception{
 
-        if(annotation instanceof ManyToOne){
-            ManyToOne manyToOne = (ManyToOne) annotation;
-            Class type = manyToOne.type();
-            ReflectUtility.mapValue(parent, manyToOne.name(), type, child);
-        }else if( annotation instanceof  OneToMany){
-            OneToMany oneToMany = (OneToMany) annotation;
-            List<C> list = (List)ReflectUtility.parseFieldValueFromObject(parent, oneToMany.name());
-            if(list == null){
-                list = new ArrayList<>();
-                ReflectUtility.mapValue(parent, oneToMany.name(), List.class, list );
+        if(relation.isRelationAnnotation()){
+            Class type = relation.getFieldType();
+            if(relation.isManyToOne()){
+                ReflectUtility.mapValue(parent, relation.getFieldName(), type, child);
+            }else {
+                List<C> list = (List)ReflectUtility.parseFieldValueFromObject(parent, relation.getFieldName());
+                if(list == null){
+                    list = new ArrayList<>();
+                    ReflectUtility.mapValue(parent, relation.getFieldName(), List.class, list );
+                }
+                list.add(child);
+
             }
-            list.add(child);
         }
 
     }
@@ -79,9 +77,14 @@ public class ReflectUtility {
                 String type = oneToMany.type().getSimpleName();
                 annotationByTable.put(type, annotation);
             }
-            if( annotation instanceof ManyToOne){
+            else if( annotation instanceof ManyToOne){
                 ManyToOne manyToOne = (ManyToOne)annotation;
                 String type = manyToOne.type().getSimpleName();
+                annotationByTable.put(type, annotation);
+            }
+            else if( annotation instanceof ManyToMany){
+                ManyToMany manyToMany = (ManyToMany)annotation;
+                String type = manyToMany.type().getSimpleName();
                 annotationByTable.put(type, annotation);
             }
         }
@@ -90,26 +93,23 @@ public class ReflectUtility {
     }
 
 
-    public static void populateDescentAnnotations(Class clazz, Map<String
-            , Class> visited, Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
-        visited.put(clazz.getSimpleName().toLowerCase(), clazz);
+    public static void populateRelationDataStructures(Class clazz
+            , Map<String, Class> visited
+            , Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
+        visited.put(ConfigManager.getInstance().getTableName(clazz).toLowerCase(), clazz);
         List<Annotation> annotationList = Util.getFieldAnnotations(clazz);
         for(Annotation annotation : annotationList){
-            Class type = null;
-            if( annotation instanceof OneToMany){
-                OneToMany oneToMany = (OneToMany) annotation;
-                type = oneToMany.type();
+            RelationInfo relationInfo = new RelationInfo(annotation);
+            if(relationInfo.isRelationAnnotation()){
+                Class type = relationInfo.getFieldType();
+                if(type!= null){
+                    String childTableName = ConfigManager.getInstance().getTableName(type);
+                    if(visited.containsKey(childTableName.toLowerCase()) == false){
+                        parentMap.put(type, new RelationAnnotationInfo(annotation, clazz));
+                        populateRelationDataStructures(type, visited, parentMap);
+                    }
+                }
             }
-            else if( annotation instanceof ManyToOne){
-                ManyToOne manyToOne = (ManyToOne)annotation;
-                type = manyToOne.type();
-            }
-            if(type != null
-                    && visited.containsKey(type.getSimpleName().toLowerCase()) == false){
-                parentMap.put(type, new RelationAnnotationInfo(annotation, clazz));
-                populateDescentAnnotations(type, visited, parentMap);
-            }
-
         }
     }
 
@@ -179,7 +179,7 @@ public class ReflectUtility {
     public static String createSingleRowUpdateSqlString(Object o) throws Exception{
 
         List<String> primaryKeys = ConfigManager.getInstance()
-                                        .getPrimaryKeyInfo(o.getClass())
+                                        .getTableInfo(o.getClass())
                                         .getPrimaryKeysAsList();
         if(primaryKeys == null || primaryKeys.size() == 0) throw new Exception("Primary key/value not found");
         List<Method> getMethods = getParsedGetMethods(o.getClass());
@@ -300,7 +300,7 @@ public class ReflectUtility {
 
     public static RelationInfo getRelationAnnotation(Class parent, Class annotationType, Class childType) {
        return Util.getFieldAnnotations(parent, annotationType).stream()
-              .map(a->new RelationInfo(a))
+              .map(a -> new RelationInfo(a))
               .filter(r -> r.getFieldType() == childType)
               .findFirst()
               .get();

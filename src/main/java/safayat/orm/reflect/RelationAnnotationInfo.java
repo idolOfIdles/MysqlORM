@@ -13,7 +13,7 @@ import java.util.Map;
 public class RelationAnnotationInfo {
     private Annotation relationAnnotation;
     private Class parent;
-    Map<String,Map<String,Boolean>> mapped;
+    private Map<String,Map<String,Boolean>> mapped;
     public RelationAnnotationInfo(Annotation relationAnnotationInfo, Class parent) {
         this.relationAnnotation = relationAnnotationInfo;
         this.parent = parent;

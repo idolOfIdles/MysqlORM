@@ -1,5 +1,11 @@
 package safayat.orm.jdbcUtility;
 
+import safayat.orm.config.ConfigManager;
+import safayat.orm.reflect.RelationAnnotationInfo;
+import safayat.orm.reflect.RelationInfo;
+import safayat.orm.reflect.Util;
+
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,19 +14,24 @@ import java.util.Map;
 /**
  * Created by safayat on 10/26/18.
  */
-public class PrimaryKeyInfo {
+public class TableInfo {
 
     private Map<String,Class> primaryKeyDbTypeByName;
     private Map<String,Class> primaryKeyClassTypeByName;
     private String  tableName;
     private String databaseName;
     private boolean  isAutoIncrement;
+    private Class  tableClass;
+    public Class getTableClass() {
+        return tableClass;
+    }
 
-    public PrimaryKeyInfo(String tableName, String databaseName) {
+    public TableInfo(String tableName, String databaseName, Class tableClass) throws Exception{
         this.tableName = tableName;
         this.databaseName = databaseName;
         primaryKeyDbTypeByName = new HashMap<>();
         primaryKeyClassTypeByName = new HashMap<>();
+        this.tableClass = tableClass;
     }
 
     public Map<String, Class> getPrimaryKeyDbTypeByName() {
@@ -93,4 +104,6 @@ public class PrimaryKeyInfo {
     public Class getClassKeyType(String key) {
          return primaryKeyClassTypeByName.get(key);
     }
+
+
 }
