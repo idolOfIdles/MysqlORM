@@ -1,11 +1,7 @@
 package safayat.orm.jdbcUtility;
 
 import safayat.orm.config.ConfigManager;
-import safayat.orm.reflect.RelationAnnotationInfo;
-import safayat.orm.reflect.RelationInfo;
-import safayat.orm.reflect.Util;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,6 +99,10 @@ public class TableInfo {
 
     public Class getClassKeyType(String key) {
          return primaryKeyClassTypeByName.get(key);
+    }
+
+    public static String getTableName(Class tableClass){
+        return ConfigManager.getInstance().getTableName(tableClass);
     }
 
 

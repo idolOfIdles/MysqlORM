@@ -119,13 +119,13 @@ public class GeneralRepository {
 
             dbConnection = getConnection();
             Table table = tClass.getAnnotation(Table.class);
-            List<String> primaryKeys = getPrimaryKeys(ConfigManager.getInstance().getTableName(tClass), dbConnection);
+            List<String> primaryKeys = getPrimaryKeys(TableInfo.getTableName(tClass), dbConnection);
 
             if( primaryKeys.isEmpty()) throw new SQLException("Primary key not found");
             if( primaryKeys.size() > 1) throw new SQLException("Not applicable for composed primary keys");
 
             StringBuilder sqlBuilder = new StringBuilder("select * from ")
-                    .append(ConfigManager.getInstance().getTableName(tClass))
+                    .append(TableInfo.getTableName(tClass))
                     .append(" where ").append(primaryKeys.get(0))
                     .append(" = ").append(Util.toMysqlString(id));
 
@@ -151,13 +151,13 @@ public class GeneralRepository {
 
     private boolean isInsertOperation(Object t)throws Exception{
 
-        String tableName = ConfigManager.getInstance().getTableName(t.getClass());
+        String tableName = TableInfo.getTableName(t.getClass());
         TableInfo tableInfo = ConfigManager.getInstance().getTableInfo(tableName);
         return tableInfo == null || (ReflectUtility.isPrimaryKeyEmpty(t, tableInfo.getSinglePrimaryKey()) && tableInfo.isAutoIncrement());
     }
     private boolean isInvalidForInsertOrUpdate(Object t)throws Exception{
 
-        String tableName = ConfigManager.getInstance().getTableName(t.getClass());
+        String tableName = TableInfo.getTableName(t.getClass());
         TableInfo tableInfo = ConfigManager.getInstance().getTableInfo(tableName);
         return tableInfo != null &&
                 !tableInfo.isAutoIncrement() &&
@@ -300,14 +300,14 @@ public class GeneralRepository {
 
     }
     public <T> List<T> getAll(Class<T> tClass) {
-        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass));
+        return getAll(tClass, "select * from " + TableInfo.getTableName(tClass));
     }
 
     public <T> List<T> getAll(Class<T> tClass, int limit) {
-        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass) + " limit " + limit);    }
+        return getAll(tClass, "select * from " + TableInfo.getTableName(tClass) + " limit " + limit);    }
 
     public <T> List<T> getAll(Class<T> tClass, int limit, int offset) {
-        return getAll(tClass, "select * from " + ConfigManager.getInstance().getTableName(tClass) + " limit " + limit + " offset " + offset);
+        return getAll(tClass, "select * from " + TableInfo.getTableName(tClass) + " limit " + limit + " offset " + offset);
     }
 
     public <T> List<T> mapResultSetToObjects(Class<T> tClass, ResultSet resultSet) {
@@ -351,7 +351,7 @@ public class GeneralRepository {
             }
         }
         if(primaryKeys.isEmpty()){
-            primaryKeys = getPrimaryKeys(ConfigManager.getInstance().getTableName(row.getClass()), connection);
+            primaryKeys = getPrimaryKeys(TableInfo.getTableName(row.getClass()), connection);
         }
         return primaryKeys;
 
