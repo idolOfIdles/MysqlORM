@@ -1,10 +1,7 @@
 package safayat.orm.jdbcUtility;
 
 import safayat.orm.config.ConfigManager;
-import safayat.orm.reflect.ReflectUtility;
-import safayat.orm.reflect.RelationAnnotationInfo;
-import safayat.orm.reflect.RelationInfo;
-import safayat.orm.reflect.Util;
+import safayat.orm.reflect.*;
 
 import java.lang.reflect.Method;
 import java.sql.ResultSet;
@@ -16,6 +13,33 @@ import java.util.*;
  * Created by safayat on 10/26/18.
  */
 public class ResultSetUtility {
+
+
+    class ParentChildRelationDataMapHandler{
+        private Map<SingleTableRow, Map<SingleTableRow, Boolean>> parentChildRelationDataMap = new HashMap<>();
+
+        public ParentChildRelationDataMapHandler() {
+            parentChildRelationDataMap = new HashMap<>();
+        }
+
+        public boolean mappingExists(SingleTableRow parent, SingleTableRow child){
+            Map<SingleTableRow, Boolean> childRowMap = parentChildRelationDataMap.get(parent);
+            if( childRowMap != null){
+                return childRowMap.get(child) != null;
+            }
+            return false;
+        }
+        public void addNewChildrenRow(SingleTableRow parent, SingleTableRow child){
+            Map<SingleTableRow, Boolean> childRowMap = parentChildRelationDataMap.get(parent);
+            if(childRowMap == null){
+                childRowMap = new HashMap<>();
+                parentChildRelationDataMap.put(parent, childRowMap);
+            }
+            childRowMap.put(child, true);
+        }
+
+
+    }
 
     private ResultSet resultSet;
     private ResultSetMetadataUtility metadata;
@@ -168,11 +192,9 @@ public class ResultSetUtility {
     }
     public <T> List<T> mapResultsetToObjects(Class<T> clazz) throws Exception{
 
-        String rootTableName = ConfigManager.getInstance().getTableName(clazz);
-        Map<String, Class> relatedClassByName = new HashMap<String, Class>();
-        Map<Class, RelationAnnotationInfo> parentClassMap = new HashMap<Class, RelationAnnotationInfo>();
-        ReflectUtility.populateRelationDataStructures(clazz, relatedClassByName, parentClassMap);
-
+        String rootTableName = TableInfo.getTableName(clazz);
+        RelationGraph relationGraph = new RelationGraph(clazz);
+        ParentChildRelationDataMapHandler parentChildRelationDataMapHandler = new ParentChildRelationDataMapHandler();
         List<T> data = new ArrayList<T>();
         List<MultipleTableRow> compressedRows = processResultSetData();
 
@@ -184,21 +206,20 @@ public class ResultSetUtility {
 
                if(singleTableRow.tableNameMaches(rootTableName) || singleTableRow.getType() == null) continue;
 
-               RelationAnnotationInfo relationAnnotationInfo = parentClassMap.get(singleTableRow.getType());
+               RelationInfo relationInfo = relationGraph.getRelationInfo(singleTableRow.getType());
 
-               if(relationAnnotationInfo == null) continue;
+               if(relationInfo == null) continue;
 
-               String parentTable = ConfigManager.getInstance().getTableName(relationAnnotationInfo.getParent());
+               String parentTable = TableInfo.getTableName(relationInfo.getParent());
                SingleTableRow parentSingleTableRow = multipleTableRow.getSingleTableRowByTableName(parentTable);
 
-               if(relationAnnotationInfo.isAlreadyMapped(parentSingleTableRow.getRowAsString()
-                       , singleTableRow.getRowAsString())) continue;
+               if(parentChildRelationDataMapHandler.mappingExists(parentSingleTableRow, singleTableRow)) continue;
 
-               ReflectUtility.mapRelation(new RelationInfo(relationAnnotationInfo.getRelationAnnotation())
+               ReflectUtility.mapRelation(relationInfo
                        , parentSingleTableRow.getRow()
                        , singleTableRow.getRow());
 
-               relationAnnotationInfo.addMap(parentSingleTableRow.getRowAsString(), singleTableRow.getRowAsString());
+               parentChildRelationDataMapHandler.addNewChildrenRow(parentSingleTableRow, singleTableRow);
            }
 
         }

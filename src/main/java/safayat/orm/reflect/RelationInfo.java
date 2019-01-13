@@ -5,6 +5,7 @@ import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.config.ConfigManager;
+import safayat.orm.jdbcUtility.TableInfo;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -14,10 +15,12 @@ import java.util.List;
  */
 public class RelationInfo {
     private Annotation relation;
+    private Class parent;
 
 
-    public RelationInfo(Annotation relation) {
+    public RelationInfo(Annotation relation, Class parent) {
         this.relation = relation;
+        this.parent = parent;
     }
 
     public boolean isRelationAnnotation(){
@@ -64,8 +67,8 @@ public class RelationInfo {
         return ((ManyToOne)relation).matchingColumnName();
     }
 
-    public String getNativeColumnWithDefaultAlias(Class parent){
-        return getTableName(parent).toLowerCase() + "." + getNativeColumn();
+    public String getNativeColumnWithDefaultAlias(){
+        return getTableName().toLowerCase() + "." + getNativeColumn();
     }
 
     public String getMatchingColumnWithDefaultAlias(){
@@ -121,20 +124,20 @@ public class RelationInfo {
         return !haveRelationInfo();
     }
 
-    public String getTableName(Class parent){
-        return ConfigManager.getInstance().getTableName(parent);
+    public String getTableName(){
+        return TableInfo.getTableName(parent);
     }
 
     public String getChildTableName(){
-        return ConfigManager.getInstance().getTableName(getFieldType());
+        return TableInfo.getTableName(getFieldType());
     }
 
-    public  String createManyToManyJoinSql(Class parent) throws Exception{
+    public  String createManyToManyJoinSql() throws Exception{
 
         if(doNotHaveRelationInfo()) throw new Exception("Not enough relation info");
         StringBuilder sql = new StringBuilder();
         sql.append(" join ").append(getRelationTable()).append(" ").append(getRelationTable().toLowerCase())
-                .append(" on ").append(getNativeColumnWithDefaultAlias(parent)).append("=").append(getNativeRelationColumnWithDefaultAlias())
+                .append(" on ").append(getNativeColumnWithDefaultAlias()).append("=").append(getNativeRelationColumnWithDefaultAlias())
                 .append(" join ").append(getChildTableName()).append(" ").append(getChildTableName().toLowerCase())
                 .append(" on ").append(getMatchingRelationColumnWithDefaultAlias()).append("=").append(getMatchingColumnWithDefaultAlias());
         return sql.toString();
@@ -142,19 +145,20 @@ public class RelationInfo {
     }
 
     public  String createJoinSql(
-            Class parent
     ) throws Exception{
 
         return new StringBuilder(" ")
-                .append(getTableName(parent)).append(" ").append(getTableName(parent).toLowerCase())
+                .append(getTableName()).append(" ").append(getTableName().toLowerCase())
                 .append(" join ")
                 .append(getChildTableName()).append(" ").append(getChildTableName().toLowerCase())
                 .append(" on ")
-                .append(getNativeColumnWithDefaultAlias(parent))
+                .append(getNativeColumnWithDefaultAlias())
                 .append(" = ")
                 .append(getMatchingColumnWithDefaultAlias())
                 .toString();
     }
 
-
+    public Class getParent() {
+        return parent;
+    }
 }
