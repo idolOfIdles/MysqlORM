@@ -1,14 +1,11 @@
 package safayat.orm.reflect;
 
-import com.mysql.cj.core.util.StringUtils;
 import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
-import safayat.orm.config.ConfigManager;
-import safayat.orm.jdbcUtility.TableInfo;
+import safayat.orm.jdbcUtility.TableMetadata;
 
 import java.lang.annotation.Annotation;
-import java.util.List;
 
 /**
  * Created by safayat on 1/8/19.
@@ -125,11 +122,11 @@ public class RelationInfo {
     }
 
     public String getTableName(){
-        return TableInfo.getTableName(parent);
+        return TableMetadata.getTableName(parent);
     }
 
     public String getChildTableName(){
-        return TableInfo.getTableName(getFieldType());
+        return TableMetadata.getTableName(getFieldType());
     }
 
     public  String createManyToManyJoinSql() throws Exception{

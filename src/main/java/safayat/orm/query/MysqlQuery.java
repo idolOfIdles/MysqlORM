@@ -3,9 +3,8 @@ package safayat.orm.query;
 import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
-import safayat.orm.config.ConfigManager;
 import safayat.orm.dao.GeneralRepositoryManager;
-import safayat.orm.query.util.Util;
+import safayat.orm.jdbcUtility.TableMetadata;
 import safayat.orm.reflect.ReflectUtility;
 import safayat.orm.reflect.RelationInfo;
 
@@ -76,7 +75,7 @@ public class MysqlQuery{
     }
 
     public MysqlTable table(Class tableClass, String alias){
-        return table(TableInfo.getTableName(tableClass), alias);
+        return table(TableMetadata.getTableName(tableClass), alias);
     }
 
     public MysqlCondition oneToMany(Class parent, Class child) throws Exception{
@@ -110,7 +109,7 @@ public class MysqlQuery{
     }
 
     public MysqlTable table(Class tableClass){
-        return table(TableInfo.getTableName(tableClass));
+        return table(TableMetadata.getTableName(tableClass));
     }
 
 
