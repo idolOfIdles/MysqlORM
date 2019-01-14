@@ -112,7 +112,7 @@ public class TableMetadata {
          return primaryKeyClassTypeByName.get(key);
     }
 
-    public static String getTableName(Class tableClass){
+    public static String getTableName(Class tableClass) {
         return ConfigManager.getInstance().getTableName(tableClass);
     }
 

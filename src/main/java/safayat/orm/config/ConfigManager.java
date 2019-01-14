@@ -106,14 +106,9 @@ public class ConfigManager {
     }
 
 
-    public String getTableName(Class tableClass) {
-/*
-        Table table = tableAnnotationByClass.get(tableClass);
-        if(table!=null){
-            return table.name();
-        }
-*/
-        return Util.classNameToTable(tableClass.getSimpleName());
+    public String getTableName(Class tableClass){
+        return getTableMetadata(tableClass).getTableName();
+
     }
 
     public Class getClassByTableName(String table, String databaseName) {
@@ -154,7 +149,6 @@ public class ConfigManager {
 
     private void readAndCacheDatabaseMetadata(String databaseName) throws Exception {
 
-        Map<Class, TableMetadata> tableMetadataMap = new HashMap<>();
         Connection connection = getConnection();
         String[] types = {"TABLE"};
         ResultSet resultSet = connection.getMetaData().getTables(databaseName, null,"", types);
@@ -214,11 +208,11 @@ public class ConfigManager {
         }
     }
 
-    public TableMetadata getTableMetadata(String tableName) throws Exception {
-        return tableMetadataMap.get(tableName.toLowerCase());
+    public TableMetadata getTableMetadata(String tableName) {
+        return tableMetadataMap.get(getClassByTableName(tableName));
     }
-    public TableMetadata getTableMetadata(Class table) throws Exception {
-        return getTableMetadata(getTableName(table));
+    public TableMetadata getTableMetadata(Class table) {
+        return tableMetadataMap.get(table);
     }
 
     public boolean havePrimaryKey(Class table) throws Exception {
