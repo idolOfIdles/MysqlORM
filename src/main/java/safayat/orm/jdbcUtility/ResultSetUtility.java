@@ -192,7 +192,7 @@ public class ResultSetUtility {
     }
     public <T> List<T> mapResultsetToObjects(Class<T> clazz) throws Exception{
 
-        String rootTableName = TableInfo.getTableName(clazz);
+        String rootTableName = TableMetadata.getTableName(clazz);
         RelationGraph relationGraph = new RelationGraph(clazz);
         ParentChildRelationDataMapHandler parentChildRelationDataMapHandler = new ParentChildRelationDataMapHandler();
         List<T> data = new ArrayList<T>();
@@ -210,7 +210,7 @@ public class ResultSetUtility {
 
                if(relationInfo == null) continue;
 
-               String parentTable = TableInfo.getTableName(relationInfo.getParent());
+               String parentTable = TableMetadata.getTableName(relationInfo.getParent());
                SingleTableRow parentSingleTableRow = multipleTableRow.getSingleTableRowByTableName(parentTable);
 
                if(parentChildRelationDataMapHandler.mappingExists(parentSingleTableRow, singleTableRow)) continue;
@@ -225,7 +225,7 @@ public class ResultSetUtility {
         }
 
         for(MultipleTableRow multipleTableRow : compressedRows){
-            data.add((T)multipleTableRow.getSingleTableRowByTableName(rootTableName).getRow());
+            data.add((T) multipleTableRow.getSingleTableRowByTableName(rootTableName).getRow());
         }
 
         return data;

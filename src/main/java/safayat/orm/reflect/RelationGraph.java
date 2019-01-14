@@ -1,7 +1,7 @@
 package safayat.orm.reflect;
 
 import safayat.orm.config.ConfigManager;
-import safayat.orm.jdbcUtility.TableInfo;
+import safayat.orm.jdbcUtility.TableMetadata;
 
 import java.lang.annotation.Annotation;
 import java.util.HashMap;
@@ -23,16 +23,13 @@ public class RelationGraph{
 
     private  void populateRelationDataStructures(Class node) throws Exception{
         addToVisitedMap(node);
-        List<Annotation> annotationList = Util.getFieldAnnotations(node);
-        for(Annotation annotation : annotationList){
-            RelationInfo relationInfo = new RelationInfo(annotation, node);
-            if(relationInfo.isRelationAnnotation()){
-                Class child = relationInfo.getFieldType();
-                if(child!= null){
-                    if(notVisited(child)){
-                        addNewRelation(relationInfo);
-                        populateRelationDataStructures(child);
-                    }
+        List<RelationInfo> annotationList = ConfigManager.getInstance().getTableMetadata(node).getRelationInfos();
+        for(RelationInfo relationInfo : annotationList){
+            Class child = relationInfo.getFieldType();
+            if(child!= null){
+                if(notVisited(child)){
+                    addNewRelation(relationInfo);
+                    populateRelationDataStructures(child);
                 }
             }
         }
@@ -43,11 +40,11 @@ public class RelationGraph{
     }
 
     private void addToVisitedMap(Class node){
-        visitedMap.put(TableInfo.getTableName(node).toLowerCase(), node);
+        visitedMap.put(TableMetadata.getTableName(node).toLowerCase(), node);
     }
 
     private boolean isVisited(Class node){
-        return visitedMap.containsKey(TableInfo.getTableName(node).toLowerCase());
+        return visitedMap.containsKey(TableMetadata.getTableName(node).toLowerCase());
     }
     private boolean notVisited(Class node){
         return !isVisited(node);
