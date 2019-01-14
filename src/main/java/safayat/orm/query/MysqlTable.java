@@ -90,30 +90,30 @@ public class MysqlTable extends QueryDataConverter implements ConditionInterface
     }
 
     public MysqlJoin join(Class tableName, String code){
-        createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), code, MysqlTable.JOIN);
+        createAndAppendJoinSqlString(TableInfo.getTableName(tableName), code, MysqlTable.JOIN);
         return mysqlJoin;
     }
     public MysqlJoin leftJoin(Class tableName, String code){
-        createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), code, MysqlTable.LEFT_JOIN);
+        createAndAppendJoinSqlString(TableInfo.getTableName(tableName), code, MysqlTable.LEFT_JOIN);
         return mysqlJoin;
     }
 
     public MysqlJoin rightJoin(Class tableName, String code){
-        createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), code, MysqlTable.RIGHT_JOIN);
+        createAndAppendJoinSqlString(TableInfo.getTableName(tableName), code, MysqlTable.RIGHT_JOIN);
         return mysqlJoin;
     }
 
     public MysqlJoin rightJoin(Class tableName){
-        createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.RIGHT_JOIN);
+        createAndAppendJoinSqlString(TableInfo.getTableName(tableName), MysqlTable.RIGHT_JOIN);
         return mysqlJoin;
     }
 
     public MysqlJoin join(Class tableName){
-        createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.JOIN);
+        createAndAppendJoinSqlString(TableInfo.getTableName(tableName), MysqlTable.JOIN);
         return mysqlJoin;
     }
     public MysqlJoin leftJoin(Class tableName){
-        createAndAppendJoinSqlString(ConfigManager.getInstance().getTableName(tableName), MysqlTable.LEFT_JOIN);
+        createAndAppendJoinSqlString(TableInfo.getTableName(tableName), MysqlTable.LEFT_JOIN);
         return mysqlJoin;
     }
 

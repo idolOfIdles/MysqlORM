@@ -5,6 +5,7 @@ import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
+import safayat.orm.jdbcUtility.TableInfo;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -92,31 +93,11 @@ public class ReflectUtility {
 
     }
 
-
-    public static void populateRelationDataStructures(Class clazz
-            , Map<String, Class> visited
-            , Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
-        visited.put(ConfigManager.getInstance().getTableName(clazz).toLowerCase(), clazz);
-        List<Annotation> annotationList = Util.getFieldAnnotations(clazz);
-        for(Annotation annotation : annotationList){
-            RelationInfo relationInfo = new RelationInfo(annotation);
-            if(relationInfo.isRelationAnnotation()){
-                Class type = relationInfo.getFieldType();
-                if(type!= null){
-                    String childTableName = ConfigManager.getInstance().getTableName(type);
-                    if(visited.containsKey(childTableName.toLowerCase()) == false){
-                        parentMap.put(type, new RelationAnnotationInfo(annotation, clazz));
-                        populateRelationDataStructures(type, visited, parentMap);
-                    }
-                }
-            }
-        }
-    }
-
     public static boolean isTableFieldMethod(Method method){
         return !(
                 method.isAnnotationPresent(OneToMany.class)
                 || method.isAnnotationPresent(ManyToOne.class)
+                || method.isAnnotationPresent(ManyToMany.class)
                 || method.isAnnotationPresent(Transient.class));
     }
 
@@ -124,6 +105,7 @@ public class ReflectUtility {
         return !(
                 field.isAnnotationPresent(OneToMany.class)
                 || field.isAnnotationPresent(ManyToOne.class)
+                || field.isAnnotationPresent(ManyToMany.class)
                 || field.isAnnotationPresent(Transient.class));
     }
 
@@ -154,7 +136,7 @@ public class ReflectUtility {
         StringBuilder stringBuilder
                 = new StringBuilder("insert into ")
                     .append(ConfigManager.getInstance().getDbName()
-                            + "." +ConfigManager.getInstance().getTableName(o.getClass()))
+                            + "." + TableInfo.getTableName(o.getClass()))
                         .append("(")
                             .append(Util.listAsString(variableNames))
                                 .append(") values(");
@@ -186,7 +168,7 @@ public class ReflectUtility {
         StringBuilder stringBuilder
                 = new StringBuilder("update ")
                 .append(ConfigManager.getInstance().getDbName()
-                        + "." +ConfigManager.getInstance().getTableName(o.getClass()))
+                        + "." + TableInfo.getTableName(o.getClass()))
                 .append(" set ");
 
         for(int i=0;i<getMethods.size();i++){
@@ -292,7 +274,7 @@ public class ReflectUtility {
 
     public static String  concatTableAndAliasFromClass(Class clazz) {
 
-        String table = ConfigManager.getInstance().getTableName(clazz);
+        String table = TableInfo.getTableName(clazz);
         return table + "." + table.toLowerCase();
 
     }
@@ -300,7 +282,7 @@ public class ReflectUtility {
 
     public static RelationInfo getRelationAnnotation(Class parent, Class annotationType, Class childType) {
        return Util.getFieldAnnotations(parent, annotationType).stream()
-              .map(a -> new RelationInfo(a))
+              .map(a -> new RelationInfo(a, parent))
               .filter(r -> r.getFieldType() == childType)
               .findFirst()
               .get();

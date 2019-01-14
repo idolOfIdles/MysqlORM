@@ -1,20 +1,5 @@
 package safayat.orm.jdbcUtility;
 
-import safayat.orm.config.ConfigManager;
-import safayat.orm.reflect.ReflectUtility;
-import safayat.orm.reflect.RelationAnnotationInfo;
-import safayat.orm.reflect.RelationInfo;
-import safayat.orm.reflect.Util;
-
-import java.lang.reflect.Method;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Created by safayat on 10/26/18.
  */
