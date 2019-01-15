@@ -2,7 +2,7 @@ package safayat.orm.crud;
 
 
 import safayat.orm.dao.GeneralRepositoryManager;
-import safayat.orm.query.util.Util;
+import safayat.orm.reflect.Util;
 
 import java.sql.Connection;
 import java.sql.SQLException;
