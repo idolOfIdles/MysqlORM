@@ -4,7 +4,6 @@ import safayat.orm.query.MysqlCondition;
 import safayat.orm.query.MysqlOrder;
 import safayat.orm.query.QueryDataConverter;
 import safayat.orm.query.QueryInfo;
-import safayat.orm.query.util.Util;
 
 import java.util.List;
 

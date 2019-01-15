@@ -4,7 +4,6 @@ import safayat.orm.interfaces.ConditionInterface;
 import safayat.orm.interfaces.GroupByInterface;
 import safayat.orm.interfaces.LimitInterface;
 import safayat.orm.interfaces.OrderInterface;
-import safayat.orm.query.util.Util;
 
 import java.util.List;
 

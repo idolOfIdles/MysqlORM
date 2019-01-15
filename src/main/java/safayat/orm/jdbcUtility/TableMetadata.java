@@ -119,4 +119,10 @@ public class TableMetadata {
     public List<RelationInfo> getRelationInfos() {
         return relationInfoListFoundInClass;
     }
+    public List<RelationInfo> getRelationInfos(Class relationType) {
+        return relationInfoListFoundInClass
+                .stream()
+                .filter(r->r.getRelation().annotationType() == relationType)
+                .collect(Collectors.toList());
+    }
 }

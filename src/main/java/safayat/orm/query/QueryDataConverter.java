@@ -1,7 +1,6 @@
 package safayat.orm.query;
 
 import safayat.orm.dao.GeneralRepositoryManager;
-import safayat.orm.query.util.Util;
 
 import java.util.List;
 
