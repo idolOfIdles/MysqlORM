@@ -2,7 +2,7 @@ package safayat.orm.model;
 
 import safayat.orm.annotation.Table;
 
-@Table(name = "option")
+@Table(name = "options")
 public class Option {
   private Integer id;
   private Integer question_id;

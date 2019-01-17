@@ -3,31 +3,33 @@ package safayat.orm.model;
 import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
+import safayat.orm.annotation.Table;
 import safayat.orm.model.Option;
 
 import java.util.Date;
 import java.util.List;
 
+@Table(name = "question")
 public class ExamQuestion {
   private Integer id;
-  private Integer questionInfoId;
   private String question;
   private Date createDate;
   private Date updateDate;
 
-
-  @ManyToMany(type = Option.class
-          , name = "answerList"
-          , matchingColumnName = "id"
-          , nativeColumnName = "id"
-          , nativeRelationColumnName = "qt_id"
-          , matchingRelationColumnName = "op_id"
-          , relationTable = "answer"
-  )
-  List<Option> answerList;
-
-  @OneToMany(type = Option.class, name = "optionList", matchingColumnName = "question_id", nativeColumnName = "id")
+    @ManyToMany(type = Option.class
+            , name = "optionList"
+            , matchingColumnName = "id"
+            , nativeColumnName = "id"
+            , nativeRelationColumnName = "qt_id"
+            , matchingRelationColumnName = "op_id"
+            , relationTable = "answer"
+    )
+    @OneToMany(type = Option.class
+          , name = "optionList"
+          , matchingColumnName = "question_id"
+          , nativeColumnName = "id")
   List<Option> optionList;
+
 
   public Integer getId(){
     return id;
@@ -54,13 +56,6 @@ public class ExamQuestion {
     this.updateDate=value;
   }
 
-  public Integer getQuestionInfoId() {
-    return questionInfoId;
-  }
-
-  public void setQuestionInfoId(Integer questionInfoId) {
-    this.questionInfoId = questionInfoId;
-  }
 
   public List<Option> getOptionList() {
         return optionList;
@@ -70,11 +65,4 @@ public class ExamQuestion {
         this.optionList = optionList;
     }
 
-    public List<Option> getAnswerList() {
-        return answerList;
-    }
-
-    public void setAnswerList(List<Option> answerList) {
-        this.answerList = answerList;
-    }
 }

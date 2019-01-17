@@ -25,62 +25,53 @@ public class MainTest {
 
     public static void main(String[] args) throws Exception {
 
-       /* Question question = new Question();
-        question.setQuestion("Why on earth?");
+        ExamQuestion question = new ExamQuestion();
+        question.setQuestion("Who built the labyrinth for Minotor?");
         question.setUpdateDate(new Date());
         question.setCreateDate(new Date());
 
 
         List<Option> options = new ArrayList<>();
         Option option = new Option();
-        option.setDescription("a");
+        option.setDescription("Deodellus");
         options.add(option);
 
         option = new Option();
-        option.setDescription("b");
+        option.setDescription("Ekarus");
         options.add(option);
 
         option = new Option();
-        option.setDescription("c");
+        option.setDescription("Orfeus");
         options.add(option);
 
         option = new Option();
-        option.setDescription("d");
+        option.setDescription("Hephasteus");
         options.add(option);
 
         question.setOptionList(options);
 
         Crud.save(question);
 
-        question.setQuestion(question.getQuestion() + " " + System.currentTimeMillis());
-        for(Option option1 : question.getOptionList()){
-            option1.setDescription(option1.getDescription() + " " + System.currentTimeMillis());
-        }
+        Answer answer = new Answer();
+        answer.setQt_id(question.getId());
+        answer.setOp_id(question.getOptionList()
+                .stream()
+                .filter(o->o.getDescription().equalsIgnoreCase("Deodellus"))
+                .map(o->o.getId())
+                .findAny()
+                .get());
 
-        Crud.save(question);
-*/
+        Crud.insert(answer);
 
-           List<Question> questionList = MysqlQuery.All()
-                    .table(Question.class, "qt")
-                    .join("online_exam.option", "ot")
-                    .on("qt.id","ot.question_id")
-                    .join(QuestionInfo.class, "qi")
-                    .on("qt.questionInfoId", "qi.id")
-                    .filter("qt.id=", 1)
-                    .toList(Question.class);
 
-           for (Question q : questionList){
-                   System.out.println(q.getQuestion());
-                   System.out.println(q.getOptionList().size());
-                   System.out.println(q.getQuestionInfo().getStatus());
-                   q.setQuestion("Why on earth changed so much?");
-                   for(Option option : q.getOptionList()){
-                        option.setDescription(option.getDescription() + " " + 100);
-                   }
-                   q.getQuestionInfo().setYear(2087);
-                   Crud.save(q);
-           }
+        List<ExamQuestion> questions = MysqlQuery
+                                        .All()
+                                        .manyToMany(ExamQuestion.class, Option.class)
+                                        .toList(ExamQuestion.class);
 
+        questions.forEach(q->{
+            System.out.println(q.optionList.size());
+        });
 
 
 
