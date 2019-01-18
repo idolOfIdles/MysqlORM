@@ -18,7 +18,7 @@ import java.util.*;
 public class ConfigManager {
     private static ConfigManager ourInstance = new ConfigManager();
     private Map<String, Map<String,Class>> classByDatabaseAndTable;
-    private Map<Class,TableMetadata> tableMetadataMap;
+    private Map<String,TableMetadata> tableMetadataMap;
     private String dbUserName;
     private String dbPassword;
     private String dbName;
@@ -175,7 +175,7 @@ public class ConfigManager {
             }
             resultSet.close();
             readPrimaryKeyAndUpdateTableInfo(connection, databaseName, tableName, tableMetadata);
-            tableMetadataMap.put(tableClass, tableMetadata);
+            tableMetadataMap.put(tableClass.getName(), tableMetadata);
         }
 
 
@@ -209,10 +209,10 @@ public class ConfigManager {
     }
 
     public TableMetadata getTableMetadata(String tableName) {
-        return tableMetadataMap.get(getClassByTableName(tableName));
+        return tableMetadataMap.get(getClassByTableName(tableName).getName());
     }
     public TableMetadata getTableMetadata(Class table) {
-        return tableMetadataMap.get(table);
+        return tableMetadataMap.get(table.getName());
     }
 
     public boolean havePrimaryKey(Class table) throws Exception {
