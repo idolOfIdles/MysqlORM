@@ -181,8 +181,8 @@ public class ResultSetUtility {
                     Object childObject = mapRow(tableClass);
                     singleTableRow = new SingleTableRow(childObject, tableClass, tableName, tableKey);
                     singleTableRowMap.addNewRow(tableName, tableKey, singleTableRow);
-                    multipleTableRow.addSingleRow(tableName, singleTableRow);
                 }
+                multipleTableRow.addSingleRow(tableName, singleTableRow);
             }
 
             multipleTableRows.add(multipleTableRow);
