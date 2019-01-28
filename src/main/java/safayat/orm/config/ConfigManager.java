@@ -101,12 +101,9 @@ public class ConfigManager {
                 classByTable.put(tableName.toLowerCase(), tableClazz);
                 logger.log(Level.INFO, "tablename: " + tableName + " class: " + tableClazz.getName());
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-
         return classByTableAndDatabase;
 
     }
