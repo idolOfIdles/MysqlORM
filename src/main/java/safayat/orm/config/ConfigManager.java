@@ -11,11 +11,15 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.sql.*;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by safayat on 10/29/18.
  */
 public class ConfigManager {
+
+    Logger logger = Logger.getLogger(ConfigManager.class.getName());
     private static ConfigManager ourInstance = new ConfigManager();
     private Map<String, Map<String,Class>> classByDatabaseAndTable;
     private Map<String,TableMetadata> tableMetadataMap;
@@ -63,11 +67,17 @@ public class ConfigManager {
         dbUrl = properties.getProperty("db.url");
         dbPassword = properties.getProperty("db.password");
         modelPackageName = properties.getProperty("db.model.package");
-        dbDriverName = properties.getProperty("db.driver");
         dbName = properties.getProperty("db.name");
+        dbDriverName = properties.getProperty("db.driver");
+        logger.log(Level.INFO, "read properties: dbName : " + dbName +
+                "\n, dbUserName:"+ dbUserName +
+                "\n, dbUrl:"+ dbUrl +
+                "\n, modelPackageName:"+ modelPackageName +
+                "\n, dbDriverName:"+ dbDriverName +
+                ".");
     }
 
-    private Map<String, Map<String, Class>>  parseModelPackageAndGenerateTableClassMap() {
+    private Map<String, Map<String, Class>> parseModelPackageAndGenerateTableClassMap() {
         Map<String, Map<String, Class>> classByTableAndDatabase = new HashMap<String, Map<String, Class>>();
         Class[] tableClasses = null;
         try {
@@ -89,7 +99,7 @@ public class ConfigManager {
                     classByTableAndDatabase.put(databaseName, classByTable);
                 }
                 classByTable.put(tableName.toLowerCase(), tableClazz);
-
+                logger.log(Level.INFO, "tablename: " + tableName + " class: " + tableClazz.getName());
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
