@@ -43,17 +43,15 @@ public class ConfigManager {
 
     private ConfigManager(){
 
-        try {
+        try{
             readProperties();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        classByDatabaseAndTable = parseModelPackageAndGenerateTableClassMap();
-        try {
+            classByDatabaseAndTable = parseModelPackageAndGenerateTableClassMap();
             tableMetadataMap = new HashMap<>();
             readAndCacheDatabaseMetadata(getDbName());
-        } catch (Exception e) {
+            logger.log(Level.INFO ,"succecssfully read configuration data");
+        }catch (Exception e){
             e.printStackTrace();
+            logger.log(Level.SEVERE ,"FAILED to initialize config manager. error is:"+e.getMessage());
         }
     }
 
@@ -183,6 +181,7 @@ public class ConfigManager {
             resultSet.close();
             readPrimaryKeyAndUpdateTableInfo(connection, databaseName, tableName, tableMetadata);
             tableMetadataMap.put(tableClass.getName(), tableMetadata);
+            logger.log(Level.INFO, tableClass.getName());
         }
 
 
