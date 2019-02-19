@@ -203,8 +203,12 @@ public class Util {
         if(stringBuilder.charAt(stringBuilder.length()-1) == suffix) removeLastCharacter(stringBuilder);
     }
 
+    public String ltrim(String str, int count) {
+        return str.length() >= count ? str.substring(count) : str;
+    }
 
-
-
+    public String rtrim(String str, int count) {
+        return str.length() >= count ? str.substring(0, str.length() - count) : str;
+    }
 
 }
