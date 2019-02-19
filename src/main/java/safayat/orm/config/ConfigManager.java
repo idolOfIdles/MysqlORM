@@ -56,17 +56,25 @@ public class ConfigManager {
     }
 
     private void readProperties() throws IOException {
+/*
         final Properties properties = new Properties();
         String propertyFileName = "database.properties";
         properties.load(getClass()
                 .getClassLoader()
                 .getResourceAsStream(propertyFileName));
-        dbUserName = properties.getProperty("db.user");
-        dbUrl = properties.getProperty("db.url");
-        dbPassword = properties.getProperty("db.password");
-        modelPackageName = properties.getProperty("db.model.package");
-        dbName = properties.getProperty("db.name");
-        dbDriverName = properties.getProperty("db.driver");
+*/
+//        dbUserName = properties.getProperty("db.user");
+        dbUserName = "safayat";
+//        dbUrl = properties.getProperty("db.url");
+        dbUrl = "jdbc:mysql://localhost:3307/online_exam?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
+//        dbPassword = properties.getProperty("db.password");
+        dbPassword = "cefalo";
+//        modelPackageName = properties.getProperty("db.model.package");
+        modelPackageName = "safayat.orm.model";
+//        dbName = properties.getProperty("db.name");
+        dbName = "online_exam";
+//        dbDriverName = properties.getProperty("db.driver");
+        dbDriverName = "com.mysql.cj.jdbc.Driver";
         logger.log(Level.INFO, "read properties: dbName : " + dbName +
                 "\n, dbUserName:"+ dbUserName +
                 "\n, dbUrl:"+ dbUrl +
@@ -80,7 +88,10 @@ public class ConfigManager {
         Class[] tableClasses = null;
         try {
             tableClasses = FileManager.getClasses(modelPackageName);
-
+            logger.log(Level.INFO, "total number of classes read by file manger: " + tableClasses.length);
+            for(Class t : tableClasses){
+                logger.log(Level.INFO, "tablename: " + t);
+            }
             for(Class tableClazz : tableClasses){
                 Annotation annotation = tableClazz.getAnnotation(Table.class);
                 String tableName = tableClazz.getSimpleName();
@@ -163,6 +174,7 @@ public class ConfigManager {
         }
 
         resultSet.close();
+        tableNames.forEach(tn-> logger.log(Level.INFO, "table found in database: " + tn));
 
         for(String tableName : tableNames){
             Class tableClass = getClassByTableName(tableName ,databaseName);
@@ -218,6 +230,7 @@ public class ConfigManager {
         return tableMetadataMap.get(getClassByTableName(tableName).getName());
     }
     public TableMetadata getTableMetadata(Class table) {
+        logger.log(Level.INFO, "getTableMetadata: " + table.getName());
         return tableMetadataMap.get(table.getName());
     }
 
