@@ -1,20 +1,19 @@
 package safayat.orm.jdbcUtility;
 
 import safayat.orm.config.ConfigManager;
-import safayat.orm.reflect.RelationAnnotationInfo;
+import safayat.orm.reflect.ReflectUtility;
 import safayat.orm.reflect.RelationInfo;
-import safayat.orm.reflect.Util;
 
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by safayat on 10/26/18.
  */
-public class TableInfo {
+public class TableMetadata {
 
     private Map<String,Class> primaryKeyDbTypeByName;
     private Map<String,Class> primaryKeyClassTypeByName;
@@ -22,16 +21,24 @@ public class TableInfo {
     private String databaseName;
     private boolean  isAutoIncrement;
     private Class  tableClass;
+    private List<RelationInfo> relationInfoListFoundInClass;
+
     public Class getTableClass() {
         return tableClass;
     }
 
-    public TableInfo(String tableName, String databaseName, Class tableClass) throws Exception{
+    public TableMetadata(String tableName
+            , String databaseName
+            , Class tableClass
+            , List<RelationInfo> relationInfos
+    ) throws Exception{
         this.tableName = tableName;
         this.databaseName = databaseName;
         primaryKeyDbTypeByName = new HashMap<>();
         primaryKeyClassTypeByName = new HashMap<>();
         this.tableClass = tableClass;
+        relationInfoListFoundInClass = relationInfos;
+
     }
 
     public Map<String, Class> getPrimaryKeyDbTypeByName() {
@@ -105,5 +112,17 @@ public class TableInfo {
          return primaryKeyClassTypeByName.get(key);
     }
 
+    public static String getTableName(Class tableClass) {
+        return ConfigManager.getInstance().getTableName(tableClass);
+    }
 
+    public List<RelationInfo> getRelationInfos() {
+        return relationInfoListFoundInClass;
+    }
+    public List<RelationInfo> getRelationInfos(Class relationType) {
+        return relationInfoListFoundInClass
+                .stream()
+                .filter(r->r.getRelation().annotationType() == relationType)
+                .collect(Collectors.toList());
+    }
 }

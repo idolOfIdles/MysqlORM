@@ -5,6 +5,7 @@ import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
 import safayat.orm.annotation.Transient;
 import safayat.orm.config.ConfigManager;
+import safayat.orm.jdbcUtility.TableMetadata;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -12,6 +13,7 @@ import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by safayat on 10/22/18.
@@ -63,68 +65,19 @@ public class ReflectUtility {
         return null;
     }
 
-    public static Class parseFieldClass(Class sourceClass, String name) throws Exception{
-        return sourceClass.getDeclaredField(name).getType();
-    }
-
-
-    public static Map<String, Annotation> getAnnotationByTable(Class clazz) throws Exception{
-        Map<String, Annotation> annotationByTable = new HashMap<String, Annotation>();
-        List<Annotation> annotationList = Util.getFieldAnnotations(clazz);
-        for(Annotation annotation : annotationList){
-            if( annotation instanceof OneToMany){
-                OneToMany oneToMany = (OneToMany) annotation;
-                String type = oneToMany.type().getSimpleName();
-                annotationByTable.put(type, annotation);
-            }
-            else if( annotation instanceof ManyToOne){
-                ManyToOne manyToOne = (ManyToOne)annotation;
-                String type = manyToOne.type().getSimpleName();
-                annotationByTable.put(type, annotation);
-            }
-            else if( annotation instanceof ManyToMany){
-                ManyToMany manyToMany = (ManyToMany)annotation;
-                String type = manyToMany.type().getSimpleName();
-                annotationByTable.put(type, annotation);
-            }
-        }
-        return annotationByTable;
-
-    }
-
-
-    public static void populateRelationDataStructures(Class clazz
-            , Map<String, Class> visited
-            , Map<Class, RelationAnnotationInfo> parentMap) throws Exception{
-        visited.put(ConfigManager.getInstance().getTableName(clazz).toLowerCase(), clazz);
-        List<Annotation> annotationList = Util.getFieldAnnotations(clazz);
-        for(Annotation annotation : annotationList){
-            RelationInfo relationInfo = new RelationInfo(annotation);
-            if(relationInfo.isRelationAnnotation()){
-                Class type = relationInfo.getFieldType();
-                if(type!= null){
-                    String childTableName = ConfigManager.getInstance().getTableName(type);
-                    if(visited.containsKey(childTableName.toLowerCase()) == false){
-                        parentMap.put(type, new RelationAnnotationInfo(annotation, clazz));
-                        populateRelationDataStructures(type, visited, parentMap);
-                    }
-                }
-            }
-        }
-    }
-
-    public static boolean isTableFieldMethod(Method method){
-        return !(
-                method.isAnnotationPresent(OneToMany.class)
-                || method.isAnnotationPresent(ManyToOne.class)
-                || method.isAnnotationPresent(Transient.class));
-    }
 
     public static boolean isTableField(Field field){
         return !(
                 field.isAnnotationPresent(OneToMany.class)
                 || field.isAnnotationPresent(ManyToOne.class)
+                || field.isAnnotationPresent(ManyToMany.class)
                 || field.isAnnotationPresent(Transient.class));
+    }
+
+    public static boolean isRelationAnnotation(Annotation a){
+        return a instanceof OneToMany
+                || a instanceof ManyToMany
+                || a instanceof ManyToOne;
     }
 
     public static List<Method> getParsedGetMethods(Class clazz){
@@ -154,7 +107,7 @@ public class ReflectUtility {
         StringBuilder stringBuilder
                 = new StringBuilder("insert into ")
                     .append(ConfigManager.getInstance().getDbName()
-                            + "." +ConfigManager.getInstance().getTableName(o.getClass()))
+                            + "." + TableMetadata.getTableName(o.getClass()))
                         .append("(")
                             .append(Util.listAsString(variableNames))
                                 .append(") values(");
@@ -179,14 +132,14 @@ public class ReflectUtility {
     public static String createSingleRowUpdateSqlString(Object o) throws Exception{
 
         List<String> primaryKeys = ConfigManager.getInstance()
-                                        .getTableInfo(o.getClass())
+                                        .getTableMetadata(o.getClass())
                                         .getPrimaryKeysAsList();
         if(primaryKeys == null || primaryKeys.size() == 0) throw new Exception("Primary key/value not found");
         List<Method> getMethods = getParsedGetMethods(o.getClass());
         StringBuilder stringBuilder
                 = new StringBuilder("update ")
                 .append(ConfigManager.getInstance().getDbName()
-                        + "." +ConfigManager.getInstance().getTableName(o.getClass()))
+                        + "." + TableMetadata.getTableName(o.getClass()))
                 .append(" set ");
 
         for(int i=0;i<getMethods.size();i++){
@@ -230,17 +183,6 @@ public class ReflectUtility {
         return stringBuilder.toString();
     }
 
-    public static boolean haveOneToManyRelationData(Object row) throws Exception {
-        Map<String,Annotation> annotationByTable = ReflectUtility.getAnnotationByTable(row.getClass());
-        for(Annotation annotation : annotationByTable.values()){
-            if( annotation instanceof OneToMany){
-                OneToMany oneToMany = (OneToMany) annotation;
-                List list = (List)ReflectUtility.parseFieldValueFromObject(row, oneToMany.name());
-                if(list.isEmpty() == false) return true;
-            }
-        }
-        return false;
-    }
 
     public static boolean haveOneToManyRelationInfo(OneToMany oneToMany) throws Exception {
        return !(oneToMany.matchingColumnName().trim().isEmpty()
@@ -290,20 +232,20 @@ public class ReflectUtility {
 
     }
 
-    public static String  concatTableAndAliasFromClass(Class clazz) {
-
-        String table = ConfigManager.getInstance().getTableName(clazz);
-        return table + "." + table.toLowerCase();
-
-    }
-
-
     public static RelationInfo getRelationAnnotation(Class parent, Class annotationType, Class childType) {
        return Util.getFieldAnnotations(parent, annotationType).stream()
-              .map(a -> new RelationInfo(a))
+              .map(a -> new RelationInfo(a, parent))
               .filter(r -> r.getFieldType() == childType)
               .findFirst()
               .get();
+    }
+
+    public static List<RelationInfo> getRelationAnnotations(Class tableClass) {
+       return Util.getFieldAnnotations(tableClass)
+              .stream()
+               .filter(r -> isRelationAnnotation(r))
+               .map(a -> new RelationInfo(a, tableClass))
+               .collect(Collectors.toList());
     }
 
 

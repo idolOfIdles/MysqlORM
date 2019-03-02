@@ -3,9 +3,8 @@ package safayat.orm.query;
 import safayat.orm.annotation.ManyToMany;
 import safayat.orm.annotation.ManyToOne;
 import safayat.orm.annotation.OneToMany;
-import safayat.orm.config.ConfigManager;
 import safayat.orm.dao.GeneralRepositoryManager;
-import safayat.orm.query.util.Util;
+import safayat.orm.jdbcUtility.TableMetadata;
 import safayat.orm.reflect.ReflectUtility;
 import safayat.orm.reflect.RelationInfo;
 
@@ -76,7 +75,7 @@ public class MysqlQuery{
     }
 
     public MysqlTable table(Class tableClass, String alias){
-        return table(ConfigManager.getInstance().getTableName(tableClass), alias);
+        return table(TableMetadata.getTableName(tableClass), alias);
     }
 
     public MysqlCondition oneToMany(Class parent, Class child) throws Exception{
@@ -84,7 +83,7 @@ public class MysqlQuery{
         if(oneToMany == null) throw new Exception("One to many Relation not found!");
         query.setTableBegan(true);
         query.append("select " + query.getQueryFields().toString() + " from ")
-                .append(oneToMany.createJoinSql(parent));
+                .append(oneToMany.createJoinSql());
         return new MysqlCondition(query, false);
     }
 
@@ -94,7 +93,7 @@ public class MysqlQuery{
 
         query.setTableBegan(true);
         query.append("select " + query.getQueryFields().toString() + " from ")
-                .append(manyToOne.createJoinSql(parent));
+                .append(manyToOne.createJoinSql());
         return new MysqlCondition(query, false);
     }
 
@@ -104,13 +103,13 @@ public class MysqlQuery{
         if(manyToMany == null) throw new Exception("Many to many Relation not found!");
         query.setTableBegan(true);
         query.append("select " + query.getQueryFields().toString() + " from ")
-                .append(manyToMany.getTableName(parent)).append(" ").append(manyToMany.getTableName(parent).toLowerCase())
-                .append(manyToMany.createManyToManyJoinSql(parent));
+                .append(manyToMany.getTableName()).append(" ").append(manyToMany.getTableName().toLowerCase())
+                .append(manyToMany.createManyToManyJoinSql());
         return new MysqlCondition(query, false);
     }
 
     public MysqlTable table(Class tableClass){
-        return table(ConfigManager.getInstance().getTableName(tableClass));
+        return table(TableMetadata.getTableName(tableClass));
     }
 
 

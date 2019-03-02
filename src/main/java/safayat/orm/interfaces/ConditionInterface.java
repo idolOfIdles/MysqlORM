@@ -3,7 +3,7 @@ package safayat.orm.interfaces;
 import safayat.orm.query.MysqlCondition;
 import safayat.orm.query.QueryDataConverter;
 import safayat.orm.query.QueryInfo;
-import safayat.orm.query.util.Util;
+import safayat.orm.reflect.Util;
 
 import java.util.List;
 

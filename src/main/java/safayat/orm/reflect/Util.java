@@ -46,9 +46,6 @@ public class Util {
         String camelCaseName = mysqlFieldtoJavaVariableName(str);
         return camelCaseName.substring(0,1).toUpperCase() + camelCaseName.substring(1);
     }
-    public static String toTitle(String str){
-        return str.substring(0,1).toUpperCase() + str.substring(1);
-    }
     public static String toJavaMethodName(String variableName, String prefix){
         return prefix + toTitle(variableName);
     }
@@ -178,6 +175,40 @@ public class Util {
 
 
 
+    public static char upper(char c){
+        return  c >= 'a' && c <= 'z' ? (char)(c - ( 'a'-'A')) : c;
+    }
 
+    public static char lower(char c){
+        return  c >= 'A' && c <= 'Z' ? (char)( c + ( 'a'-'A')) : c;
+    }
+
+    public static String tableName(Class clazz){
+        char[] chars = clazz.getSimpleName().toCharArray();
+        chars[0] = lower(chars[0]);
+        return new String(chars);
+    }
+
+    public static String toTitle(String str) {
+        char[] chars = str.toCharArray();
+        chars[0] = upper(chars[0]);
+        return new String(chars);
+    }
+
+    public static void removeLastCharacter(StringBuilder stringBuilder) {
+        if(stringBuilder.length()>0) stringBuilder.deleteCharAt(stringBuilder.length()-1);
+    }
+
+    public static void rightStripIfExists(StringBuilder stringBuilder, char suffix) {
+        if(stringBuilder.charAt(stringBuilder.length()-1) == suffix) removeLastCharacter(stringBuilder);
+    }
+
+    public String ltrim(String str, int count) {
+        return str.length() >= count ? str.substring(count) : str;
+    }
+
+    public String rtrim(String str, int count) {
+        return str.length() >= count ? str.substring(0, str.length() - count) : str;
+    }
 
 }
