@@ -1,10 +1,5 @@
 package safayat.orm.reflect;
 
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -15,45 +10,44 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Created by safayat on 10/22/18.
  */
-public class FileManager {
+public class PackageScanner {
 
-    static Class thisClazz = FileManager.class;
-    static Logger logger = Logger.getLogger(thisClazz.getName());
+    static Logger logger = Logger.getLogger(PackageScanner.class.getName());
+    private String packageNames;
+    private URL directoryUrl;
+    private ClassLoader classLoader = Thread.currentThread().getContextClassLoader();;
 
+    public PackageScanner(String packageName) {
+        this.packageNames = packageName;
+        directoryUrl = getDirectoryUrl(packageName);
+    }
 
-    public static void write(String filePath, String fileString){
-        BufferedWriter writer = null;
+    private URL getDirectoryUrl(String packageName){
+
         try {
-            writer = new BufferedWriter(new java.io.FileWriter(filePath));
+            String firstPackageName = packageName == null ? "" : packageName.split(",")[0].trim();
+            String path = firstPackageName.replace('.', '/');
+            Enumeration<URL> resources = classLoader.getResources(path);
+            while (resources.hasMoreElements()) {
+                return resources.nextElement();
+            }
 
-            writer.write(fileString);
-
-
-            writer.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        }catch (Exception e){
+            logger.log(Level.SEVERE, e.getMessage());
         }
+        return null;
     }
 
-
-    private static URL getDirectoryUrl(){
-        String me = thisClazz.getName().replace(".", "/")+".class";
-        return thisClazz.getClassLoader().getResource(me);
-    }
-
-    private static Map<String, String> getPackagePaths(String[] packageNames) throws Exception{
+    private  Map<String, String> getPackagePaths() throws Exception{
 
         Map<String, String> packagePathMap = new HashMap<>();
-        for(String packageName : packageNames){
+        for(String packageName : packageNames.split(",")){
             String path = packageName.replace('.', '/');
-            Enumeration<URL> resources = thisClazz.getClassLoader().getResources(path);
+            Enumeration<URL> resources = classLoader.getResources(path);
             while (resources.hasMoreElements()) {
                 URL resource = resources.nextElement();
                 packagePathMap.put(packageName, resource.getFile().replaceAll("file:", "").replaceAll("!", ""));
@@ -63,16 +57,16 @@ public class FileManager {
 
     }
 
-    private static boolean isJarFile(){
-        return getDirectoryUrl().getProtocol().equals("jar");
+    private boolean isJarFile(){
+        return directoryUrl.getProtocol().equals("jar");
     }
 
-    private static String getJarPath(){
-        String path = getDirectoryUrl().getPath();
+    private String getJarPath(){
+        String path = directoryUrl.getPath();
         return path.substring(5, path.indexOf("!"));
     }
 
-    private static Map<String, String> createJarEntriesMap() throws Exception{
+    private  Map<String, String> createJarEntriesMap() throws Exception{
         Map<String, String> jarEntryMap = new HashMap<>();
         String jarPath = getJarPath();
         logger.log(Level.INFO, "jarpath :" + jarPath);
@@ -86,14 +80,15 @@ public class FileManager {
     }
 
 
-    public static Class[] getClasses(String packageNamesAsString)
+    public  Class[] getClasses()
             throws Exception {
 
 
-        Map<String, String> packagePathMap = getPackagePaths(packageNamesAsString.split(","));
+        Map<String, String> packagePathMap = getPackagePaths();
         ArrayList<Class> classes = new ArrayList();
 
         boolean isJarFile = isJarFile();
+        logger.log(Level.INFO,"isJarFile: " + isJarFile);
         Iterator<String> itr = packagePathMap.keySet().iterator();
         Map<String, String> jarEntryMap = new HashMap<>();
         if(isJarFile){
@@ -117,10 +112,10 @@ public class FileManager {
         return classes.toArray(new Class[classes.size()]);
     }
 
-    private static List<String> getResourceListing(
+    private  List<String> getResourceListing(
             String path, Map<String, String> jarEntryMap) throws URISyntaxException, IOException {
 
-        URL dirURL = getDirectoryUrl();
+        URL dirURL = directoryUrl;
         logger.log(Level.INFO, dirURL.getPath());
 
         /* A JAR path */
@@ -143,7 +138,8 @@ public class FileManager {
     }
 
 
-    private static List findClasses(File directory, String packageName) throws ClassNotFoundException {
+    private List findClasses(File directory, String packageName) throws ClassNotFoundException {
+        logger.log(Level.INFO, "in classes");
         List classes = new ArrayList();
         if (!directory.exists()) {
             return classes;
@@ -154,6 +150,7 @@ public class FileManager {
                 assert !file.getName().contains(".");
                 classes.addAll(findClasses(file, packageName + "." + file.getName()));
             } else if (file.getName().endsWith(".class")) {
+                logger.log(Level.INFO, "fileName: " + file.getName());
                 classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
             }
         }

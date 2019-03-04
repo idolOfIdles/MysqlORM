@@ -3,7 +3,7 @@ package safayat.orm.config;
 import safayat.orm.annotation.Table;
 import safayat.orm.interfaces.ConnectionPoolInterface;
 import safayat.orm.jdbcUtility.TableMetadata;
-import safayat.orm.reflect.FileManager;
+import safayat.orm.reflect.PackageScanner;
 import safayat.orm.reflect.ReflectUtility;
 import safayat.orm.reflect.Util;
 
@@ -49,6 +49,8 @@ public class ConfigManager {
             tableMetadataMap = new HashMap<>();
             readAndCacheDatabaseMetadata(getDbName());
             logger.log(Level.INFO ,"succecssfully read configuration data");
+            tableMetadataMap.keySet().forEach(key->System.out.println(key));
+
         }catch (Exception e){
             e.printStackTrace();
             logger.log(Level.SEVERE ,"FAILED to initialize config manager. error is:"+e.getMessage());
@@ -87,11 +89,7 @@ public class ConfigManager {
         Map<String, Map<String, Class>> classByTableAndDatabase = new HashMap<String, Map<String, Class>>();
         Class[] tableClasses = null;
         try {
-            tableClasses = FileManager.getClasses(modelPackageName);
-            logger.log(Level.INFO, "total number of classes read by file manger: " + tableClasses.length);
-            for(Class t : tableClasses){
-                logger.log(Level.INFO, "tablename: " + t);
-            }
+            tableClasses = new PackageScanner(modelPackageName).getClasses();
             for(Class tableClazz : tableClasses){
                 Annotation annotation = tableClazz.getAnnotation(Table.class);
                 String tableName = tableClazz.getSimpleName();
@@ -156,6 +154,9 @@ public class ConfigManager {
 
     public String getModelPackageName() {
         return modelPackageName;
+    }
+    public String getFirstModelPackageName() {
+        return modelPackageName.split(",")[0];
     }
     public Connection getConnection() throws SQLException {
         if(connectionPool != null) return connectionPool.getConnection();
